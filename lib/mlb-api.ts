@@ -7,6 +7,10 @@ export interface MlbScheduleGame {
   gameDate: string
   status: { detailedState: string }
   venue: { id: number; name: string }
+  lineups?: {
+    homePlayers?: Array<{ id: number }>
+    awayPlayers?: Array<{ id: number }>
+  }
   teams: {
     home: {
       team: { id: number; name: string }

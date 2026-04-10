@@ -1,6 +1,6 @@
 'use client'
 
-import type { GameResult } from '@/lib/types'
+import type { GameResult, PitcherStats } from '@/lib/types'
 import { useSettings, resolveTimezone } from '@/app/context/SettingsContext'
 import { getTeamDisplayName } from '@/lib/team-names'
 
@@ -70,9 +70,28 @@ function ResultBadge({ game }: { game: GameResult }) {
   return <span className="text-slate-300">—</span>
 }
 
+function PitcherStatusBadge({ pitcher }: { pitcher: PitcherStats }) {
+  if (pitcher.status === 'tbd') {
+    return <span className="shrink-0 rounded-full bg-slate-100 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-slate-500">TBD</span>
+  }
+  if (pitcher.status === 'probable') {
+    return <span className="shrink-0 rounded-full bg-amber-100 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-700">P</span>
+  }
+  return <span className="shrink-0 rounded-full bg-green-100 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-green-700">C</span>
+}
+
+function PitcherCell({ pitcher }: { pitcher: PitcherStats }) {
+  return (
+    <span className="flex max-w-full items-center gap-2 whitespace-nowrap">
+      <span className="truncate">{pitcher.name}</span>
+      <PitcherStatusBadge pitcher={pitcher} />
+    </span>
+  )
+}
+
 export default function GameRow({ game }: GameRowProps) {
   const { settings } = useSettings()
-  const estimated = !game.homePitcher.confirmed || !game.awayPitcher.confirmed
+  const estimated = game.homePitcher.status === 'tbd' || game.awayPitcher.status === 'tbd'
   const awayTeam = getTeamDisplayName(game.awayTeam)
   const homeTeam = getTeamDisplayName(game.homeTeam)
   const pct = formatPct(game.yrfiProbability, estimated)
@@ -93,11 +112,11 @@ export default function GameRow({ game }: GameRowProps) {
       </td>
       {/* Away SP */}
       <td className="px-4 py-3 align-middle text-sm text-slate-600">
-        <span className="block max-w-full truncate whitespace-nowrap">{game.awayPitcher.name}</span>
+        <PitcherCell pitcher={game.awayPitcher} />
       </td>
       {/* Home SP */}
       <td className="px-4 py-3 align-middle text-sm text-slate-600">
-        <span className="block max-w-full truncate whitespace-nowrap">{game.homePitcher.name}</span>
+        <PitcherCell pitcher={game.homePitcher} />
       </td>
       {/* YRFI % */}
       <td className={`px-4 py-3 align-middle whitespace-nowrap tabular-nums ${yrfiColor(game.yrfiProbability)}`}>{pct}</td>
