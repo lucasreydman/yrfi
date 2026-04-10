@@ -83,18 +83,18 @@ export default function ClientShell() {
             <button
               type="button"
               onClick={() => setTab('games')}
-              className="rounded-full bg-slate-100 px-4 py-1.5 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-200"
+              className="min-h-12 rounded-full bg-slate-100 px-5 py-2.5 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-200 sm:min-h-0 sm:px-4 sm:py-1.5"
             >
               ← Back to games
             </button>
           )}
         </div>
-        <div className="flex items-center justify-end gap-2 sm:justify-normal">
+        <div className="grid w-full grid-cols-2 gap-2 sm:flex sm:w-auto sm:items-center sm:justify-end">
           {tab === 'games' && <ConfigPanel />}
           <button
             type="button"
             onClick={() => setTab(tab === 'methodology' ? 'games' : 'methodology')}
-            className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-medium transition-colors ${
+            className={`flex min-h-12 items-center justify-center gap-2 rounded-full px-5 py-2.5 text-sm font-medium transition-colors sm:min-h-0 sm:px-3 sm:py-1.5 ${
               tab === 'methodology'
                 ? 'bg-green-600 text-white'
                 : 'bg-slate-100 text-slate-600 hover:bg-slate-200'

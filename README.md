@@ -117,7 +117,7 @@ npx vercel --prod # Deploy to production
 - **YRFI % display:** Percentages render to one decimal place
 - **Result column:** Upcoming shows `—`, in-progress first innings show `IP`, scoring first innings show `RUN`, and scoreless first innings show `NO RUN`
 - **Desktop table alignment:** Temp, Wind, Time, and Result use centered fixed-width columns for uniform spacing
-- **Mobile controls:** Date selection, refresh state, preferences, and methodology toggle collapse cleanly without changing desktop behavior
+- **Mobile controls:** Date selection, preferences, and methodology use full-size pill controls; preferences open in a centered modal so the panel never clips off-screen
 - **TBD or missing pitcher data:** Model falls back to league-average inputs; values prefixed with `~`
 - **Lineup-aware boost:** If a confirmed batting order is posted, the model compares the top three hitters against the team baseline and nudges the YRFI number accordingly
 - **Roofed/retractable parks:** Weather is neutralized and the UI shows `Roof`

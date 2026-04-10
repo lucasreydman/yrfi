@@ -49,15 +49,41 @@ function SegmentRow({
 export default function ConfigPanel() {
   const { settings, update } = useSettings()
   const [open, setOpen] = useState(false)
+  const [isMobile, setIsMobile] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
+    function syncIsMobile() {
+      setIsMobile(window.innerWidth < 640)
+    }
+
+    syncIsMobile()
+    window.addEventListener('resize', syncIsMobile)
+
+    return () => window.removeEventListener('resize', syncIsMobile)
+  }, [])
+
+  useEffect(() => {
     if (!open) return
+
+    document.body.style.overflow = 'hidden'
+
     function handleClick(e: MouseEvent) {
       if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
     }
+
+    function handleKeyDown(e: KeyboardEvent) {
+      if (e.key === 'Escape') setOpen(false)
+    }
+
     document.addEventListener('mousedown', handleClick)
-    return () => document.removeEventListener('mousedown', handleClick)
+    document.addEventListener('keydown', handleKeyDown)
+
+    return () => {
+      document.body.style.overflow = ''
+      document.removeEventListener('mousedown', handleClick)
+      document.removeEventListener('keydown', handleKeyDown)
+    }
   }, [open])
 
   return (
@@ -65,55 +91,74 @@ export default function ConfigPanel() {
       <button
         type="button"
         onClick={() => setOpen(o => !o)}
-        className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-medium transition-colors ${
+        className={`flex min-h-12 w-full items-center justify-center gap-2 rounded-full px-5 py-2.5 text-sm font-medium transition-colors sm:min-h-0 sm:w-auto sm:px-3 sm:py-1.5 ${
           open
             ? 'bg-green-600 text-white'
             : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
         }`}
         aria-label="Preferences"
+        aria-haspopup="dialog"
       >
         <GearIcon />
-        <span className="sm:hidden">Prefs</span>
+        <span className="sm:hidden">Preferences</span>
         <span className="hidden sm:inline">Preferences</span>
       </button>
 
       {open && (
-        <div className="absolute right-0 top-full z-50 mt-2 w-[min(18rem,calc(100vw-2rem))] max-h-[calc(100vh-6rem)] space-y-4 overflow-y-auto rounded-2xl border border-slate-200 bg-white p-4 shadow-lg sm:w-64">
-          <p className="text-xs font-semibold uppercase tracking-wider text-slate-400">Preferences</p>
+        <div className={isMobile ? 'fixed inset-0 z-50 flex items-center justify-center bg-slate-900/30 p-4' : 'absolute right-0 top-full z-50 mt-2'}>
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-label="Preferences"
+            className="w-full max-w-sm space-y-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-lg sm:w-64"
+          >
+            <div className="flex items-center justify-between gap-3">
+              <p className="text-xs font-semibold uppercase tracking-wider text-slate-400">Preferences</p>
+              {isMobile && (
+                <button
+                  type="button"
+                  onClick={() => setOpen(false)}
+                  className="rounded-full bg-slate-100 px-3 py-1.5 text-xs font-medium text-slate-500 transition-colors hover:bg-slate-200"
+                >
+                  Close
+                </button>
+              )}
+            </div>
 
-          <SegmentRow
-            label="Temperature"
-            options={[{ label: '°F', value: 'F' }, { label: '°C', value: 'C' }]}
-            value={settings.tempUnit}
-            onChange={v => update({ tempUnit: v as 'F' | 'C' })}
-          />
+            <SegmentRow
+              label="Temperature"
+              options={[{ label: '°F', value: 'F' }, { label: '°C', value: 'C' }]}
+              value={settings.tempUnit}
+              onChange={v => update({ tempUnit: v as 'F' | 'C' })}
+            />
 
-          <SegmentRow
-            label="Wind speed"
-            options={[{ label: 'mph', value: 'mph' }, { label: 'km/h', value: 'kmh' }]}
-            value={settings.windUnit}
-            onChange={v => update({ windUnit: v as 'mph' | 'kmh' })}
-          />
+            <SegmentRow
+              label="Wind speed"
+              options={[{ label: 'mph', value: 'mph' }, { label: 'km/h', value: 'kmh' }]}
+              value={settings.windUnit}
+              onChange={v => update({ windUnit: v as 'mph' | 'kmh' })}
+            />
 
-          <SegmentRow
-            label="Odds format"
-            options={[{ label: 'American', value: 'american' }, { label: 'Decimal', value: 'decimal' }]}
-            value={settings.oddsFormat}
-            onChange={v => update({ oddsFormat: v as 'american' | 'decimal' })}
-          />
+            <SegmentRow
+              label="Odds format"
+              options={[{ label: 'American', value: 'american' }, { label: 'Decimal', value: 'decimal' }]}
+              value={settings.oddsFormat}
+              onChange={v => update({ oddsFormat: v as 'american' | 'decimal' })}
+            />
 
-          <div className="space-y-1.5">
-            <span className="block text-xs font-medium text-slate-500">Time zone</span>
-            <select
-              aria-label="Time zone"
-              value={settings.timezone}
-              onChange={e => update({ timezone: e.target.value })}
-              className="w-full rounded-lg border border-slate-200 bg-white px-2 py-2 text-xs text-slate-700 focus:outline-none focus:ring-2 focus:ring-green-500"
-            >
-              {TIMEZONES.map(tz => (
-                <option key={tz.value} value={tz.value}>{tz.label}</option>
-              ))}
-            </select>
+            <div className="space-y-1.5">
+              <span className="block text-xs font-medium text-slate-500">Time zone</span>
+              <select
+                aria-label="Time zone"
+                value={settings.timezone}
+                onChange={e => update({ timezone: e.target.value })}
+                className="w-full rounded-lg border border-slate-200 bg-white px-2 py-2 text-xs text-slate-700 focus:outline-none focus:ring-2 focus:ring-green-500"
+              >
+                {TIMEZONES.map(tz => (
+                  <option key={tz.value} value={tz.value}>{tz.label}</option>
+                ))}
+              </select>
+            </div>
           </div>
         </div>
       )}
