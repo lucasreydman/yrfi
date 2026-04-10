@@ -118,7 +118,8 @@ npx vercel --prod # Deploy to production
 - **Result column:** Upcoming shows `—`, in-progress first innings show `IP`, scoring first innings show `RUN`, and scoreless first innings show `NO RUN`
 - **Desktop table alignment:** Temp, Wind, Time, and Result use centered fixed-width columns for uniform spacing
 - **Mobile controls:** Today, Tomorrow, Preferences, and Methodology use the same compact pill treatment; the methodology tab keeps Back to games and Methodology aligned on one row with matched sizing
-- **TBD or missing pitcher data:** Model falls back to league-average inputs; values prefixed with `~`
+- **TBD starters:** `~` prefixes YRFI and suppresses the bet threshold only when one or both probable starters are still TBD
+- **Limited pitcher data:** Named starters with missing season or Savant inputs show a `Limited data` badge on that pitcher instead of turning the whole game into an estimated display
 - **Lineup-aware boost:** If a confirmed batting order is posted, the model compares the top three hitters against the team baseline and nudges the YRFI number accordingly
 - **Roofed/retractable parks:** Weather is neutralized and the UI shows `Roof`
 - **Weather failure:** Factors default to 1.0; weather column shows `—`

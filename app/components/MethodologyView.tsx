@@ -164,9 +164,9 @@ export default function MethodologyView() {
         <p className="mt-3 text-slate-500 text-xs leading-relaxed">
           The ceiling function is used instead of rounding so the threshold is always conservative,
           you need odds <em>at least</em> this good, not just approximately this good.
-          A <Mono>~</Mono> prefix means one or both pitchers were TBD or the model had to fall back
-          to league-average inputs because pitcher data was missing,
-          treat those numbers as estimates.
+          A <Mono>~</Mono> prefix now means one or both probable starters are still TBD.
+          When a named starter is posted but some pitcher inputs had to fall back to league-average values,
+          the UI keeps the normal YRFI and odds display and instead shows a <Mono>Limited data</Mono> badge next to the affected pitcher.
         </p>
       </Section>
 

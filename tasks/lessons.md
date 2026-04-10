@@ -6,3 +6,4 @@
 - Avoid browser-target regressions from newer CSS text-wrapping properties unless the support matrix explicitly allows them; prefer broadly supported defaults in shared styles.
 - For small-screen control panels, prefer a centered modal over an anchored dropdown when viewport clipping is likely; desktop can keep the anchored popover.
 - On tight mobile headers, reduce shared pill height before expanding vertical spacing; matched compact controls preserve hierarchy without wasting room.
+- When fallback semantics differ in severity, do not collapse them into one visual marker; reserve the strongest warning state for the truly uncertain case and use a softer badge for partial data gaps.
