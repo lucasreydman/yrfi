@@ -6,6 +6,10 @@
   --green-dark: #15803d;
 }
 
+html {
+  scrollbar-gutter: stable;
+}
+
 body {
   @apply bg-white text-slate-900 antialiased;
 }

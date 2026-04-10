@@ -16,7 +16,7 @@ export default function DatePicker({ date, onChange }: DatePickerProps) {
   const tomorrowStr = tomorrow.toISOString().split('T')[0]
 
   return (
-    <div className="flex gap-2 px-4 py-3">
+    <div className="flex gap-2">
       {[today, tomorrowStr].map(d => (
         <button
           key={d}

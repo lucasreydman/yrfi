@@ -70,7 +70,7 @@ export default function ClientShell() {
     <SettingsProvider>
     <div className="mx-auto max-w-7xl">
       {/* Nav bar: date tabs + right-side actions */}
-      <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100">
+      <div className="flex items-center justify-between px-4 h-14 border-b border-slate-100">
         <div className="flex gap-2">
           {tab === 'games' ? (
             <DatePicker date={date} onChange={d => { setDate(d); setData(null) }} />
@@ -85,7 +85,7 @@ export default function ClientShell() {
           )}
         </div>
         <div className="flex items-center gap-2">
-          <ConfigPanel />
+          {tab === 'games' && <ConfigPanel />}
           <button
             type="button"
             onClick={() => setTab(tab === 'methodology' ? 'games' : 'methodology')}

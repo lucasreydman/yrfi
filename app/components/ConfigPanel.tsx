@@ -104,6 +104,7 @@ export default function ConfigPanel() {
           <div className="space-y-1.5">
             <span className="block text-xs font-medium text-slate-500">Time zone</span>
             <select
+              aria-label="Time zone"
               value={settings.timezone}
               onChange={e => update({ timezone: e.target.value })}
               className="w-full rounded-lg border border-slate-200 bg-white px-2 py-2 text-xs text-slate-700 focus:outline-none focus:ring-2 focus:ring-green-500"
