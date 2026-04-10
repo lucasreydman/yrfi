@@ -7,7 +7,7 @@ const geist = Geist({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
   title: {
-    absolute: 'MLB YRFI Betting Model',
+    absolute: 'YRFI',
   },
   description: 'Find the minimum odds you need to bet YRFI with a statistical edge. Model-driven, updated daily.',
   icons: {
@@ -18,7 +18,7 @@ export const metadata: Metadata = {
     apple: '/yrfi-ballmark.svg',
   },
   openGraph: {
-    title: 'MLB YRFI Betting Model',
+    title: 'YRFI',
     description: 'Find the minimum odds you need to bet YRFI with a statistical edge. Model-driven, updated daily.',
     url: getSiteUrl(),
     siteName: SITE_NAME,
