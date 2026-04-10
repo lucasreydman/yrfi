@@ -73,6 +73,7 @@ export default function ClientShell() {
   const inProgress = data?.games.filter(g => g.gameStatus === 'inProgress' && g.firstInningResult === 'pending') ?? []
   const settled = data?.games.filter(g => g.gameStatus === 'settled' || (g.gameStatus === 'inProgress' && g.firstInningResult !== 'pending')) ?? []
   const isMethodologyTab = tab === 'methodology'
+  const methodologyButtonClass = `flex items-center justify-center gap-2 ${mobilePillClass} ${isMethodologyTab ? 'bg-green-600 text-white hover:bg-green-700' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`
 
   return (
     <SettingsProvider>
@@ -94,8 +95,8 @@ export default function ClientShell() {
           {isMethodologyTab ? (
             <button
               type="button"
-              onClick={() => setTab('games')}
-              className={`flex w-full items-center justify-center gap-2 ${mobilePillClass} bg-green-600 text-white sm:w-auto`}
+              onClick={() => setTab('methodology')}
+              className={`${methodologyButtonClass} w-full sm:hidden`}
             >
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <line x1="18" y1="20" x2="18" y2="10" />
@@ -106,23 +107,21 @@ export default function ClientShell() {
             </button>
           ) : null}
         </div>
-        {!isMethodologyTab && (
-          <div className="grid w-full grid-cols-2 gap-2 sm:flex sm:w-auto sm:items-center sm:justify-end">
-            {tab === 'games' && <ConfigPanel />}
-            <button
-              type="button"
-              onClick={() => setTab('methodology')}
-              className={`flex items-center justify-center gap-2 ${mobilePillClass} bg-slate-100 text-slate-600 hover:bg-slate-200`}
-            >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <line x1="18" y1="20" x2="18" y2="10" />
-                <line x1="12" y1="20" x2="12" y2="4" />
-                <line x1="6" y1="20" x2="6" y2="14" />
-              </svg>
-              <span>Methodology</span>
-            </button>
-          </div>
-        )}
+        <div className={`${isMethodologyTab ? 'hidden sm:flex sm:w-auto sm:items-center sm:justify-end' : 'grid w-full grid-cols-2 gap-2 sm:flex sm:w-auto sm:items-center sm:justify-end'}`}>
+          {tab === 'games' && <ConfigPanel />}
+          <button
+            type="button"
+            onClick={() => setTab('methodology')}
+            className={methodologyButtonClass}
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="18" y1="20" x2="18" y2="10" />
+              <line x1="12" y1="20" x2="12" y2="4" />
+              <line x1="6" y1="20" x2="6" y2="14" />
+            </svg>
+            <span>Methodology</span>
+          </button>
+        </div>
       </div>
 
       {/* Methodology tab */}
