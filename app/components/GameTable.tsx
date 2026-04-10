@@ -126,10 +126,10 @@ export default function GameTable({ games, label }: GameTableProps) {
               <th className="px-4 py-3 whitespace-nowrap">Home SP</th>
               <th className="px-4 py-3 whitespace-nowrap">YRFI %</th>
               <th className="px-4 py-3 whitespace-nowrap">Bet at</th>
-              <th className="px-4 py-3 whitespace-nowrap">Temp</th>
-              <th className="px-4 py-3 whitespace-nowrap">Wind</th>
-              <th className="px-4 py-3 whitespace-nowrap text-right">Time</th>
-              <th className="px-3 py-3 whitespace-nowrap text-right">Result</th>
+              <th className="px-4 py-3 whitespace-nowrap text-center">Temp</th>
+              <th className="px-4 py-3 whitespace-nowrap text-center">Wind</th>
+              <th className="px-4 py-3 whitespace-nowrap text-center">Time</th>
+              <th className="px-3 py-3 whitespace-nowrap text-center">Result</th>
             </tr>
           </thead>
           <tbody>

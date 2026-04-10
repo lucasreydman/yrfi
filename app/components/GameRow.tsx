@@ -67,7 +67,7 @@ function ResultBadge({ game }: { game: GameResult }) {
   if (game.gameStatus === 'inProgress') {
     return <span className="inline-flex items-center justify-center whitespace-nowrap rounded-full bg-yellow-100 px-2 py-0.5 text-xs font-semibold text-yellow-700">IP</span>
   }
-  return <span className="text-slate-300">—</span>
+  return <span className="inline-flex w-full justify-center text-slate-300">—</span>
 }
 
 export default function GameRow({ game }: GameRowProps) {
@@ -104,13 +104,13 @@ export default function GameRow({ game }: GameRowProps) {
       {/* Bet at */}
       <td className="px-4 py-3 align-middle whitespace-nowrap text-sm font-medium text-slate-700 tabular-nums">{odds}</td>
       {/* Temp */}
-      <td className="px-4 py-3 align-middle whitespace-nowrap text-sm text-slate-500">{temp}</td>
+      <td className="px-4 py-3 align-middle whitespace-nowrap text-center text-sm text-slate-500">{temp}</td>
       {/* Wind */}
-      <td className="px-4 py-3 align-middle whitespace-nowrap text-sm text-slate-500">{wind}</td>
+      <td className="px-4 py-3 align-middle whitespace-nowrap text-center text-sm text-slate-500">{wind}</td>
       {/* Time */}
-      <td className="px-4 py-3 align-middle whitespace-nowrap text-right text-sm text-slate-500">{time}</td>
+      <td className="px-4 py-3 align-middle whitespace-nowrap text-center text-sm text-slate-500">{time}</td>
       {/* Result */}
-      <td className="px-3 py-3 align-middle whitespace-nowrap text-right">
+      <td className="px-3 py-3 align-middle whitespace-nowrap text-center">
         <ResultBadge game={game} />
       </td>
     </tr>
