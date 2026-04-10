@@ -1,6 +1,6 @@
 'use client'
 
-import { createContext, useContext, useEffect, useState } from 'react'
+import { createContext, useContext, useState } from 'react'
 
 export interface Settings {
   tempUnit: 'F' | 'C'
@@ -22,14 +22,13 @@ const SettingsContext = createContext<{
 }>({ settings: DEFAULTS, update: () => {} })
 
 export function SettingsProvider({ children }: { children: React.ReactNode }) {
-  const [settings, setSettings] = useState<Settings>(DEFAULTS)
-
-  useEffect(() => {
+  const [settings, setSettings] = useState<Settings>(() => {
     try {
       const stored = localStorage.getItem('yrfi-settings')
-      if (stored) setSettings({ ...DEFAULTS, ...JSON.parse(stored) })
+      if (stored) return { ...DEFAULTS, ...JSON.parse(stored) }
     } catch {}
-  }, [])
+    return DEFAULTS
+  })
 
   function update(patch: Partial<Settings>) {
     setSettings(prev => {
