@@ -85,18 +85,23 @@ export default function ClientShell() {
           )}
         </div>
         <div className="flex items-center gap-2">
+          <ConfigPanel />
           <button
             type="button"
             onClick={() => setTab(tab === 'methodology' ? 'games' : 'methodology')}
-            className={`rounded-full px-4 py-1.5 text-sm font-medium transition-colors ${
+            className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-medium transition-colors ${
               tab === 'methodology'
                 ? 'bg-green-600 text-white'
                 : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
             }`}
           >
-            How it works
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="18" y1="20" x2="18" y2="10" />
+              <line x1="12" y1="20" x2="12" y2="4" />
+              <line x1="6" y1="20" x2="6" y2="14" />
+            </svg>
+            <span className="hidden sm:inline">Methodology</span>
           </button>
-          <ConfigPanel />
         </div>
       </div>
 
