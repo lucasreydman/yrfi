@@ -7,6 +7,8 @@ import StatusBar from './StatusBar'
 import DatePicker from './DatePicker'
 import LoadingSkeleton from './LoadingSkeleton'
 import MethodologyView from './MethodologyView'
+import ConfigPanel from './ConfigPanel'
+import { SettingsProvider } from '@/app/context/SettingsContext'
 
 function getPacificToday(): string {
   return new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Los_Angeles' }).format(new Date())
@@ -65,8 +67,9 @@ export default function ClientShell() {
   const settled = data?.games.filter(g => g.gameStatus === 'settled' || (g.gameStatus === 'inProgress' && g.firstInningResult !== 'pending')) ?? []
 
   return (
+    <SettingsProvider>
     <div className="mx-auto max-w-7xl">
-      {/* Nav bar: date tabs + methodology tab */}
+      {/* Nav bar: date tabs + right-side actions */}
       <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100">
         <div className="flex gap-2">
           {tab === 'games' ? (
@@ -81,17 +84,20 @@ export default function ClientShell() {
             </button>
           )}
         </div>
-        <button
-          type="button"
-          onClick={() => setTab(tab === 'methodology' ? 'games' : 'methodology')}
-          className={`rounded-full px-4 py-1.5 text-sm font-medium transition-colors ${
-            tab === 'methodology'
-              ? 'bg-green-600 text-white'
-              : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-          }`}
-        >
-          How it works
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setTab(tab === 'methodology' ? 'games' : 'methodology')}
+            className={`rounded-full px-4 py-1.5 text-sm font-medium transition-colors ${
+              tab === 'methodology'
+                ? 'bg-green-600 text-white'
+                : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+            }`}
+          >
+            How it works
+          </button>
+          <ConfigPanel />
+        </div>
       </div>
 
       {/* Methodology tab */}
@@ -138,5 +144,6 @@ export default function ClientShell() {
         </>
       )}
     </div>
+    </SettingsProvider>
   )
 }

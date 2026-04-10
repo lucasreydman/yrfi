@@ -1,17 +1,38 @@
 import type { GameResult } from '@/lib/types'
 import GameRow from './GameRow'
-import { formatOdds } from '@/lib/poisson'
+import { useSettings } from '@/app/context/SettingsContext'
 
 interface GameTableProps {
   games: GameResult[]
   label: string
 }
 
+function formatOddsDisplay(
+  american: number,
+  estimated: boolean,
+  format: 'american' | 'decimal',
+): string {
+  const prefix = estimated ? '~' : ''
+  if (format === 'decimal') {
+    const decimal = american > 0
+      ? (american / 100) + 1
+      : (100 / Math.abs(american)) + 1
+    return `${prefix}${decimal.toFixed(2)} or better`
+  }
+  const display = american === -100 ? '+100' : american > 0 ? `+${american}` : `${american}`
+  return `${prefix}${display} or better`
+}
+
 function MobileCard({ game }: { game: GameResult }) {
+  const { settings } = useSettings()
   const estimated = !game.homePitcher.confirmed || !game.awayPitcher.confirmed
   const pct = `${estimated ? '~' : ''}${Math.round(game.yrfiProbability * 100)}%`
-  const odds = formatOdds(game.breakEvenOdds, estimated)
-  const time = new Date(game.gameTime).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })
+  const odds = formatOddsDisplay(game.breakEvenOdds, estimated, settings.oddsFormat)
+  const time = new Date(game.gameTime).toLocaleTimeString([], {
+    hour: 'numeric',
+    minute: '2-digit',
+    timeZone: settings.timezone,
+  })
 
   const yrfiColor = game.yrfiProbability >= 0.55
     ? 'text-green-700' : game.yrfiProbability >= 0.45
