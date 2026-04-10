@@ -19,6 +19,7 @@ import {
 import type { GameResult, GamesResponse, PitcherStats } from '@/lib/types'
 
 const RESPONSE_TTL_SECONDS = 300 // 5 minutes
+const RESPONSE_CACHE_VERSION = 'v2'
 
 function getPacificDate(): string {
   return new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Los_Angeles' }).format(new Date())
@@ -36,7 +37,7 @@ export async function GET(req: NextRequest) {
   const date = req.nextUrl.searchParams.get('date') ?? getPacificDate()
 
   // KV cache check
-  const cacheKey = `games-response:${date}`
+  const cacheKey = `games-response:${RESPONSE_CACHE_VERSION}:${date}`
   const cached = await kvGet<GamesResponse>(cacheKey)
   if (cached) return NextResponse.json(cached)
 
