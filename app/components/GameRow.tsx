@@ -104,13 +104,13 @@ export default function GameRow({ game }: GameRowProps) {
       {/* Bet at */}
       <td className="px-4 py-3 align-middle whitespace-nowrap text-sm font-medium text-slate-700 tabular-nums">{odds}</td>
       {/* Temp */}
-      <td className="px-4 py-3 align-middle whitespace-nowrap text-center text-sm text-slate-500">{temp}</td>
+      <td className="px-3 py-3 align-middle whitespace-nowrap text-center text-sm text-slate-500">{temp}</td>
       {/* Wind */}
-      <td className="px-4 py-3 align-middle whitespace-nowrap text-center text-sm text-slate-500">{wind}</td>
+      <td className="px-3 py-3 align-middle whitespace-nowrap text-center text-sm text-slate-500">{wind}</td>
       {/* Time */}
-      <td className="px-4 py-3 align-middle whitespace-nowrap text-center text-sm text-slate-500">{time}</td>
+      <td className="px-3 py-3 align-middle whitespace-nowrap text-center text-sm text-slate-500">{time}</td>
       {/* Result */}
-      <td className="px-3 py-3 align-middle whitespace-nowrap text-center">
+      <td className="px-2.5 py-3 align-middle whitespace-nowrap text-center">
         <ResultBadge game={game} />
       </td>
     </tr>

@@ -107,17 +107,17 @@ export default function GameTable({ games, label }: GameTableProps) {
 
       {/* Desktop table */}
       <div className="hidden sm:block overflow-x-auto rounded-xl border border-slate-200 bg-white">
-        <table className="min-w-[1120px] w-full table-fixed text-left text-sm">
+        <table className="min-w-[1080px] w-full table-fixed text-left text-sm">
           <colgroup>
             <col className="w-[212px]" />
             <col className="w-[152px]" />
             <col className="w-[152px]" />
             <col className="w-[84px]" />
-            <col className="w-[172px]" />
+            <col className="w-[164px]" />
+            <col className="w-[68px]" />
+            <col className="w-[80px]" />
             <col className="w-[76px]" />
-            <col className="w-[88px]" />
-            <col className="w-[84px]" />
-            <col className="w-[100px]" />
+            <col className="w-[92px]" />
           </colgroup>
           <thead className="border-b border-slate-200 bg-slate-50 text-xs font-semibold uppercase tracking-wider text-slate-400">
             <tr>
@@ -126,10 +126,10 @@ export default function GameTable({ games, label }: GameTableProps) {
               <th className="px-4 py-3 whitespace-nowrap">Home SP</th>
               <th className="px-4 py-3 whitespace-nowrap">YRFI %</th>
               <th className="px-4 py-3 whitespace-nowrap">Bet at</th>
-              <th className="px-4 py-3 whitespace-nowrap text-center">Temp</th>
-              <th className="px-4 py-3 whitespace-nowrap text-center">Wind</th>
-              <th className="px-4 py-3 whitespace-nowrap text-center">Time</th>
-              <th className="px-3 py-3 whitespace-nowrap text-center">Result</th>
+              <th className="px-3 py-3 whitespace-nowrap text-center">Temp</th>
+              <th className="px-3 py-3 whitespace-nowrap text-center">Wind</th>
+              <th className="px-3 py-3 whitespace-nowrap text-center">Time</th>
+              <th className="px-2.5 py-3 whitespace-nowrap text-center">Result</th>
             </tr>
           </thead>
           <tbody>
