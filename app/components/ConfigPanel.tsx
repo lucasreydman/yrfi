@@ -24,15 +24,15 @@ function SegmentRow({
   onChange: (v: string) => void
 }) {
   return (
-    <div className="flex items-center justify-between gap-4">
-      <span className="text-xs text-slate-500 w-28 shrink-0">{label}</span>
-      <div className="flex rounded-lg border border-slate-200 overflow-hidden text-xs font-medium">
+    <div className="space-y-1.5">
+      <span className="block text-xs font-medium text-slate-500">{label}</span>
+      <div className="flex w-full rounded-lg border border-slate-200 overflow-hidden text-xs font-medium">
         {options.map(opt => (
           <button
             key={opt.value}
             type="button"
             onClick={() => onChange(opt.value)}
-            className={`px-3 py-1.5 transition-colors ${
+            className={`flex-1 whitespace-nowrap px-3 py-2 transition-colors ${
               value === opt.value
                 ? 'bg-green-600 text-white'
                 : 'bg-white text-slate-600 hover:bg-slate-50'
@@ -77,7 +77,7 @@ export default function ConfigPanel() {
       </button>
 
       {open && (
-        <div className="absolute right-0 top-full mt-2 z-50 w-72 rounded-2xl border border-slate-200 bg-white shadow-lg p-4 space-y-4">
+        <div className="absolute right-0 top-full mt-2 z-50 w-64 rounded-2xl border border-slate-200 bg-white shadow-lg p-4 space-y-4">
           <p className="text-xs font-semibold uppercase tracking-wider text-slate-400">Preferences</p>
 
           <SegmentRow
@@ -101,12 +101,12 @@ export default function ConfigPanel() {
             onChange={v => update({ oddsFormat: v as 'american' | 'decimal' })}
           />
 
-          <div className="flex items-center justify-between gap-4">
-            <span className="text-xs text-slate-500 w-28 shrink-0">Time zone</span>
+          <div className="space-y-1.5">
+            <span className="block text-xs font-medium text-slate-500">Time zone</span>
             <select
               value={settings.timezone}
               onChange={e => update({ timezone: e.target.value })}
-              className="flex-1 rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-xs text-slate-700 focus:outline-none focus:ring-2 focus:ring-green-500"
+              className="w-full rounded-lg border border-slate-200 bg-white px-2 py-2 text-xs text-slate-700 focus:outline-none focus:ring-2 focus:ring-green-500"
             >
               {TIMEZONES.map(tz => (
                 <option key={tz.value} value={tz.value}>{tz.label}</option>
