@@ -73,14 +73,20 @@ const factorRows = [
   {
     name: 'Temp factor',
     formula: String.raw`T<55^\circ\!F\to0.92,\ T>80^\circ\!F\to1.06,\ \text{else }1.00`,
-    mobileFormula: String.raw`T<55^\circ\!F\to0.92,\ T>80^\circ\!F\to1.06,\ \mathrm{else}\to1.00`,
+    mobileFormula: String.raw`\begin{aligned}
+T<55^\circ\!F&\to0.92\\
+T>80^\circ\!F&\to1.06,\ \mathrm{else}\to1.00
+\end{aligned}`,
     description: 'Cold air suppresses carry and hot air helps it slightly. Fixed-roof and retractable-roof parks are treated as neutral to avoid fake weather edge when roof state is unknown.',
     source: 'Open-Meteo',
   },
   {
     name: 'Wind factor',
     formula: String.raw`\ge10\ \mathrm{mph}:\ \text{in}\to0.93,\ \text{out}\to1.08,\ \text{cross}\to1.00`,
-    mobileFormula: String.raw`\ge10\ \mathrm{mph}:\ \mathrm{in}\to0.93,\ \mathrm{out}\to1.08,\ \mathrm{cross}\to1.00`,
+    mobileFormula: String.raw`\begin{aligned}
+\ge10\ \mathrm{mph}:\ &\mathrm{in}\to0.93,\ \mathrm{out}\to1.08\\
+&\mathrm{cross}\to1.00
+\end{aligned}`,
     description: 'Wind direction is resolved relative to each park\'s outfield orientation, then the total weather effect is damped so one forecast input cannot create an unrealistic number.',
     source: 'Open-Meteo',
   },
