@@ -124,7 +124,7 @@ npx vercel --prod # Deploy to production
 - **Weather failure:** Factors default to 1.0; weather column shows `—`
 - **Preferences:** Temperature unit, wind unit, odds format, timezone — persisted in localStorage
 - **Footer credit:** The page footer links to lucasreydman.xyz
-- **Methodology math:** Formula blocks scale down to fit the viewport instead of relying on horizontal scrolling
+- **Methodology math:** Formula blocks use smaller mobile typography so they stay visible without horizontal scrolling
 
 ---
 

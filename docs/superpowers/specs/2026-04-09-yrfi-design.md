@@ -52,7 +52,7 @@ lib/
     DatePicker.tsx          # Today/tomorrow navigation using Pacific slate date (America/Los_Angeles); compact pills on mobile
     StatusBar.tsx           # Last updated timestamp, game count, manual refresh button; stays inline on mobile
     ConfigPanel.tsx         # Preferences control; dropdown on desktop, centered modal on mobile
-    MethodologyView.tsx     # Model explainer; formulas shrink to fit instead of scrolling on mobile
+    MethodologyView.tsx     # Model explainer; formulas use smaller mobile typography instead of scrolling
     LoadingSkeleton.tsx     # Loading state with elapsed timer
 ```
 

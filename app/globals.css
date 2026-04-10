@@ -21,26 +21,6 @@ html {
 }
 
 @layer components {
-  .scaled-math-container {
-    --scaled-math-height: auto;
-    height: var(--scaled-math-height);
-  }
-
-  .scaled-math-content {
-    --scaled-math-scale: 1;
-    width: max-content;
-    max-width: none;
-    transform: scale(var(--scaled-math-scale));
-  }
-
-  .scaled-math-content--left {
-    transform-origin: top left;
-  }
-
-  .scaled-math-content--center {
-    transform-origin: top center;
-  }
-
   .methodology-formula .katex-display {
     margin: 0;
   }
@@ -56,6 +36,7 @@ html {
 
   .methodology-inline-formula .katex {
     font-size: 0.94rem;
+    white-space: normal;
   }
 
   @media (max-width: 640px) {
@@ -64,11 +45,13 @@ html {
     }
 
     .methodology-formula .katex {
-      font-size: 0.96rem;
+      font-size: 0.7rem;
+      line-height: 1.25;
     }
 
     .methodology-inline-formula .katex {
-      font-size: 0.88rem;
+      font-size: 0.68rem;
+      line-height: 1.2;
     }
   }
 }
