@@ -9,9 +9,11 @@ import {
 } from './poisson'
 
 const KV_TTL_SECONDS = 12 * 60 * 60 // 12 hours
+const SAVANT_CACHE_VERSION = 'v2'
+const MIN_REASONABLE_SAVANT_ROWS = 300
 
 function savantKey(year: number): string {
-  return `savant-pitchers:${year}`
+  return `savant-pitchers:${SAVANT_CACHE_VERSION}:${year}`
 }
 
 function parseIP(formatted: string): number {
@@ -73,7 +75,7 @@ async function fetchSavantCsv(year: number): Promise<string> {
 
 export async function loadSavantStore(year: number): Promise<SavantStore> {
   const cached = await kvGet<SavantStore>(savantKey(year))
-  if (cached) return cached
+  if (cached && Object.keys(cached).length >= MIN_REASONABLE_SAVANT_ROWS) return cached
 
   const csv = await fetchSavantCsv(year)
   const store = parseSavantCsv(csv)
