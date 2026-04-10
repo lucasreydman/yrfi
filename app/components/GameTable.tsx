@@ -50,16 +50,16 @@ export default function GameTable({ games, label }: GameTableProps) {
 
       {/* Desktop table */}
       <div className="hidden sm:block overflow-x-auto rounded-xl border border-slate-200 bg-white">
-        <table className="w-full text-left text-sm">
+        <table className="w-full min-w-[960px] text-left text-sm">
           <thead className="border-b border-slate-200 bg-slate-50 text-xs font-semibold uppercase tracking-wider text-slate-400">
             <tr>
-              <th className="px-4 py-3">Matchup</th>
-              <th className="px-4 py-3">Away SP</th>
-              <th className="px-4 py-3">Home SP</th>
-              <th className="px-4 py-3">YRFI %</th>
-              <th className="px-4 py-3">Bet at</th>
-              <th className="px-4 py-3">Weather</th>
-              <th className="px-4 py-3 text-right">Time</th>
+              <th className="px-4 py-3 w-[220px] whitespace-nowrap">Matchup</th>
+              <th className="px-4 py-3 w-[150px] whitespace-nowrap">Away SP</th>
+              <th className="px-4 py-3 w-[150px] whitespace-nowrap">Home SP</th>
+              <th className="px-4 py-3 w-[80px] whitespace-nowrap">YRFI %</th>
+              <th className="px-4 py-3 w-[160px] whitespace-nowrap">Bet at</th>
+              <th className="px-4 py-3 w-[110px] whitespace-nowrap">Weather</th>
+              <th className="px-4 py-3 w-[130px] whitespace-nowrap text-right">Time</th>
             </tr>
           </thead>
           <tbody>

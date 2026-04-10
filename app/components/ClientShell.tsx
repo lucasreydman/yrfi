@@ -61,7 +61,7 @@ export default function ClientShell() {
   const settled = data?.games.filter(g => g.gameStatus === 'settled') ?? []
 
   return (
-    <div className="mx-auto max-w-5xl">
+    <div className="mx-auto max-w-7xl">
       <DatePicker date={date} onChange={d => { setDate(d); setData(null) }} />
 
       {data && (

@@ -40,23 +40,23 @@ export default function GameRow({ game }: GameRowProps) {
   return (
     <tr className="border-b border-slate-100 hover:bg-slate-50">
       {/* Matchup */}
-      <td className="px-4 py-3 font-medium">
+      <td className="px-4 py-3 font-medium whitespace-nowrap">
         <span className="text-slate-500">{game.awayTeam}</span>
         <span className="mx-1 text-slate-300">@</span>
         <span>{game.homeTeam}</span>
       </td>
       {/* Away SP */}
-      <td className="px-4 py-3 text-sm text-slate-600">{game.awayPitcher.name}</td>
+      <td className="px-4 py-3 text-sm text-slate-600 whitespace-nowrap">{game.awayPitcher.name}</td>
       {/* Home SP */}
-      <td className="px-4 py-3 text-sm text-slate-600">{game.homePitcher.name}</td>
+      <td className="px-4 py-3 text-sm text-slate-600 whitespace-nowrap">{game.homePitcher.name}</td>
       {/* YRFI % */}
-      <td className={`px-4 py-3 tabular-nums ${yrfiColor(game.yrfiProbability)}`}>{pct}</td>
+      <td className={`px-4 py-3 tabular-nums whitespace-nowrap ${yrfiColor(game.yrfiProbability)}`}>{pct}</td>
       {/* Bet at */}
-      <td className="px-4 py-3 text-sm font-medium text-slate-700 tabular-nums">{odds}</td>
+      <td className="px-4 py-3 text-sm font-medium text-slate-700 tabular-nums whitespace-nowrap">{odds}</td>
       {/* Weather */}
-      <td className="hidden px-4 py-3 text-sm text-slate-500 sm:table-cell">{weatherDisplay(game.weather)}</td>
+      <td className="hidden px-4 py-3 text-sm text-slate-500 whitespace-nowrap sm:table-cell">{weatherDisplay(game.weather)}</td>
       {/* Time + Result */}
-      <td className="px-4 py-3 text-right text-sm text-slate-500">
+      <td className="px-4 py-3 text-right text-sm text-slate-500 whitespace-nowrap">
         <div className="flex items-center justify-end gap-2">
           <ResultBadge result={game.firstInningResult} />
           <span>{formatTime(game.gameTime)}</span>
