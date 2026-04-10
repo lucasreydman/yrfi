@@ -102,7 +102,7 @@ export default function GameRow({ game }: GameRowProps) {
         {pct}
       </td>
       {/* Bet at */}
-      <td className={`px-4 py-3 align-middle whitespace-nowrap text-sm tabular-nums ${estimated ? 'text-center text-slate-300' : 'font-medium text-slate-700'}`}>
+      <td className={`${estimated ? 'px-0' : 'px-4'} py-3 align-middle whitespace-nowrap text-sm tabular-nums ${estimated ? 'text-slate-300' : 'font-medium text-slate-700'}`}>
         {estimated ? <span className="inline-flex w-full justify-center">—</span> : odds}
       </td>
       {/* Temp */}
