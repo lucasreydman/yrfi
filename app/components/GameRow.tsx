@@ -1,5 +1,7 @@
+'use client'
+
 import type { GameResult } from '@/lib/types'
-import { useSettings } from '@/app/context/SettingsContext'
+import { useSettings, resolveTimezone } from '@/app/context/SettingsContext'
 
 interface GameRowProps {
   game: GameResult
@@ -39,27 +41,32 @@ function formatOddsDisplay(
   return `${prefix}${display} or better`
 }
 
-function formatWeather(
-  weather: GameResult['weather'],
-  tempUnit: 'F' | 'C',
-  windUnit: 'mph' | 'kmh',
-): string {
+function formatTemp(weather: GameResult['weather'], tempUnit: 'F' | 'C'): string {
   if (weather.failure) return '—'
-  const temp = tempUnit === 'C'
+  return tempUnit === 'C'
     ? `${Math.round((weather.tempF - 32) * 5 / 9)}°C`
     : `${weather.tempF}°F`
-  const speed = windUnit === 'kmh'
-    ? Math.round(weather.windSpeedMph * 1.60934)
-    : weather.windSpeedMph
-  const speedLabel = windUnit === 'kmh' ? 'km/h' : 'mph'
-  const wind = weather.windSpeedMph < 5 ? 'calm' : `${speed}${speedLabel}`
-  return `${temp} ${wind}`
 }
 
-function ResultBadge({ result }: { result: GameResult['firstInningResult'] }) {
-  if (result === 'run') return <span className="rounded bg-green-100 px-2 py-0.5 text-xs font-medium text-green-700">RUN ✓</span>
-  if (result === 'no_run') return <span className="rounded bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-500">NO</span>
-  return null
+function formatWind(weather: GameResult['weather'], windUnit: 'mph' | 'kmh'): string {
+  if (weather.failure) return '—'
+  if (weather.windSpeedMph < 5) return 'Calm'
+  return windUnit === 'kmh'
+    ? `${Math.round(weather.windSpeedMph * 1.60934)} km/h`
+    : `${weather.windSpeedMph} mph`
+}
+
+function ResultBadge({ game }: { game: GameResult }) {
+  if (game.firstInningResult === 'run') {
+    return <span className="inline-flex items-center justify-center whitespace-nowrap rounded-full bg-green-100 px-2 py-0.5 text-xs font-semibold text-green-700">RUN</span>
+  }
+  if (game.firstInningResult === 'no_run') {
+    return <span className="inline-flex items-center justify-center whitespace-nowrap rounded-full bg-red-100 px-2 py-0.5 text-xs font-semibold text-red-600">NO RUN</span>
+  }
+  if (game.gameStatus === 'inProgress') {
+    return <span className="inline-flex items-center justify-center whitespace-nowrap rounded-full bg-yellow-100 px-2 py-0.5 text-xs font-semibold text-yellow-700">IP</span>
+  }
+  return <span className="text-slate-300">—</span>
 }
 
 export default function GameRow({ game }: GameRowProps) {
@@ -67,33 +74,41 @@ export default function GameRow({ game }: GameRowProps) {
   const estimated = !game.homePitcher.confirmed || !game.awayPitcher.confirmed
   const pct = formatPct(game.yrfiProbability, estimated)
   const odds = formatOddsDisplay(game.breakEvenOdds, estimated, settings.oddsFormat)
-  const weather = formatWeather(game.weather, settings.tempUnit, settings.windUnit)
-  const time = formatTime(game.gameTime, settings.timezone)
+  const temp = formatTemp(game.weather, settings.tempUnit)
+  const wind = formatWind(game.weather, settings.windUnit)
+  const time = formatTime(game.gameTime, resolveTimezone(settings.timezone))
 
   return (
     <tr className="border-b border-slate-100 hover:bg-slate-50">
-      {/* Matchup */}
-      <td className="px-4 py-3 font-medium whitespace-nowrap">
-        <span className="text-slate-500">{game.awayTeam}</span>
-        <span className="mx-1 text-slate-300">@</span>
-        <span>{game.homeTeam}</span>
+      {/* Matchup — truncate prevents overflow */}
+      <td className="px-4 py-3 align-middle font-medium">
+        <span className="flex min-w-0 items-center gap-1 whitespace-nowrap">
+          <span className="truncate text-slate-500">{game.awayTeam}</span>
+          <span className="shrink-0 text-slate-300">@</span>
+          <span className="truncate">{game.homeTeam}</span>
+        </span>
       </td>
       {/* Away SP */}
-      <td className="px-4 py-3 text-sm text-slate-600 whitespace-nowrap">{game.awayPitcher.name}</td>
+      <td className="px-4 py-3 align-middle text-sm text-slate-600">
+        <span className="block max-w-full truncate whitespace-nowrap">{game.awayPitcher.name}</span>
+      </td>
       {/* Home SP */}
-      <td className="px-4 py-3 text-sm text-slate-600 whitespace-nowrap">{game.homePitcher.name}</td>
+      <td className="px-4 py-3 align-middle text-sm text-slate-600">
+        <span className="block max-w-full truncate whitespace-nowrap">{game.homePitcher.name}</span>
+      </td>
       {/* YRFI % */}
-      <td className={`px-4 py-3 tabular-nums whitespace-nowrap ${yrfiColor(game.yrfiProbability)}`}>{pct}</td>
+      <td className={`px-4 py-3 align-middle whitespace-nowrap tabular-nums ${yrfiColor(game.yrfiProbability)}`}>{pct}</td>
       {/* Bet at */}
-      <td className="px-4 py-3 text-sm font-medium text-slate-700 tabular-nums whitespace-nowrap">{odds}</td>
-      {/* Weather */}
-      <td className="hidden px-4 py-3 text-sm text-slate-500 whitespace-nowrap sm:table-cell">{weather}</td>
-      {/* Time + Result */}
-      <td className="px-4 py-3 text-right text-sm text-slate-500 whitespace-nowrap">
-        <div className="flex items-center justify-end gap-2">
-          <ResultBadge result={game.firstInningResult} />
-          <span>{time}</span>
-        </div>
+      <td className="px-4 py-3 align-middle whitespace-nowrap text-sm font-medium text-slate-700 tabular-nums">{odds}</td>
+      {/* Temp */}
+      <td className="px-4 py-3 align-middle whitespace-nowrap text-sm text-slate-500">{temp}</td>
+      {/* Wind */}
+      <td className="px-4 py-3 align-middle whitespace-nowrap text-sm text-slate-500">{wind}</td>
+      {/* Time */}
+      <td className="px-4 py-3 align-middle whitespace-nowrap text-right text-sm text-slate-500">{time}</td>
+      {/* Result */}
+      <td className="px-3 py-3 align-middle whitespace-nowrap text-right">
+        <ResultBadge game={game} />
       </td>
     </tr>
   )

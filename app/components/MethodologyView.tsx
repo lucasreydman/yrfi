@@ -69,7 +69,7 @@ export default function MethodologyView() {
         ]} />
 
         <p className="mt-4 text-slate-500 text-xs leading-relaxed">
-          Each team's λ uses that team's OBP and the <em>opposing</em> pitcher's stats —
+          Each team&apos;s λ uses that team&apos;s OBP and the <em>opposing</em> pitcher&apos;s stats —
           because the home team bats against the away starter, and vice versa.
           League-average values are used for any pitcher listed as TBD.
         </p>
@@ -96,7 +96,7 @@ export default function MethodologyView() {
       {/* Step 3 */}
       <Section title="Step 3 — Convert probability to break-even American odds">
         <p className="mb-3 leading-relaxed">
-          The "Bet at" column shows the worst odds at which a YRFI bet still has positive expected
+          The &quot;Bet at&quot; column shows the worst odds at which a YRFI bet still has positive expected
           value. If the sportsbook offers better odds than this, the bet is +EV.
         </p>
         <FormulaBlock>
@@ -112,7 +112,7 @@ export default function MethodologyView() {
       </Section>
 
       {/* Caveats */}
-      <Section title="What the model doesn't capture">
+      <Section title="What the model doesn&apos;t capture">
         <ul className="space-y-1.5 text-slate-500 leading-relaxed list-disc list-inside">
           <li>Lineup construction (leadoff hitter quality, platoon splits)</li>
           <li>Bullpen usage or opener strategies</li>

@@ -7,9 +7,14 @@
 }
 
 html {
-  scrollbar-gutter: stable;
+  overflow-y: scroll;
 }
 
-body {
-  @apply bg-white text-slate-900 antialiased;
+@layer base {
+  body {
+    background-color: white;
+    color: var(--color-slate-900);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
 }

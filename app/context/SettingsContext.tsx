@@ -13,7 +13,12 @@ const DEFAULTS: Settings = {
   tempUnit: 'F',
   windUnit: 'mph',
   oddsFormat: 'american',
-  timezone: 'America/New_York',
+  timezone: 'auto',
+}
+
+export function resolveTimezone(tz: string): string {
+  if (tz === 'auto') return Intl.DateTimeFormat().resolvedOptions().timeZone
+  return tz
 }
 
 const SettingsContext = createContext<{
@@ -50,6 +55,7 @@ export function useSettings() {
 }
 
 export const TIMEZONES: { label: string; value: string }[] = [
+  { label: 'Device (auto)', value: 'auto' },
   { label: 'Eastern (ET)',   value: 'America/New_York' },
   { label: 'Central (CT)',   value: 'America/Chicago' },
   { label: 'Mountain (MT)',  value: 'America/Denver' },
