@@ -44,7 +44,7 @@ function MobileCard({ game }: { game: GameResult }) {
   const estimated = !game.homePitcher.confirmed || !game.awayPitcher.confirmed
   const awayTeam = getTeamDisplayName(game.awayTeam)
   const homeTeam = getTeamDisplayName(game.homeTeam)
-  const pct = `${estimated ? '~' : ''}${Math.round(game.yrfiProbability * 100)}%`
+  const pct = `${estimated ? '~' : ''}${(game.yrfiProbability * 100).toFixed(1)}%`
   const odds = formatOddsDisplay(game.breakEvenOdds, estimated, settings.oddsFormat)
   const time = new Date(game.gameTime).toLocaleTimeString([], {
     hour: 'numeric',

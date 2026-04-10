@@ -15,7 +15,7 @@ function yrfiColor(pct: number): string {
 }
 
 function formatPct(p: number, estimated: boolean): string {
-  return `${estimated ? '~' : ''}${Math.round(p * 100)}%`
+  return `${estimated ? '~' : ''}${(p * 100).toFixed(1)}%`
 }
 
 function formatTime(iso: string, timezone: string): string {
