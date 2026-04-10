@@ -1,3 +1,68 @@
+import { BlockMath, InlineMath } from 'react-katex'
+
+const lambdaMath = String.raw`\begin{aligned}
+\lambda &= 0.36 \times A_{\text{bounded}} \\
+A_{\text{raw}} &= F_{\text{FIP}} \times F_{K} \times F_{\text{barrel}} \times F_{\text{OBP}} \times F_{\text{park}} \times F_{\text{weather}} \\
+A_{\text{bounded}} &= \operatorname{clamp}(A_{\text{raw}}, 0.55, 1.55)
+\end{aligned}`
+
+const yrfiMath = String.raw`\begin{aligned}
+P(\mathrm{YRFI}) &= 1 - P(\text{home scores }0)\,P(\text{away scores }0) \\
+&= 1 - e^{-\lambda_{\text{home}}} e^{-\lambda_{\text{away}}} \\
+&= 1 - e^{-(\lambda_{\text{home}} + \lambda_{\text{away}})}
+\end{aligned}`
+
+const oddsMath = String.raw`\mathrm{break\mbox{-}even\ odds}=
+\begin{cases}
+-\left\lceil \dfrac{100p}{1-p} \right\rceil & p \ge 0.50 \\
++\left\lceil \dfrac{100(1-p)}{p} \right\rceil & p < 0.50
+\end{cases}`
+
+const factorRows = [
+  {
+    name: 'FIP factor',
+    formula: String.raw`\left(\dfrac{\text{shrunk FIP}}{3.80}\right)^{0.55}`,
+    description: 'FIP is the main pitcher input, but it is first shrunk toward league average when innings are limited and then damped so it cannot dominate the whole model by itself.',
+    source: 'MLB Stats API',
+  },
+  {
+    name: 'K% factor',
+    formula: String.raw`\operatorname{clamp}\!\left(1 + 0.3\,\dfrac{0.23 - \text{shrunk }K\%}{0.23},\ 0.85,\ 1.15\right)`,
+    description: 'Strikeout rate is shrunk toward league average by batters faced, then clamped so a single extreme K% cannot swing the estimate by more than ±15%.',
+    source: 'MLB Stats API',
+  },
+  {
+    name: 'Barrel factor',
+    formula: String.raw`\left(\dfrac{\text{shrunk barrel rate}}{8.0\%}\right)^{0.35}`,
+    description: 'Barrel rate captures contact quality, but it overlaps with FIP, so it is shrunk by innings pitched and applied as a softer secondary adjustment.',
+    source: 'Baseball Savant',
+  },
+  {
+    name: 'OBP factor',
+    formula: String.raw`\left(\dfrac{\text{shrunk team OBP}}{0.310}\right)^{0.70}`,
+    description: 'Season OBP remains the lineup proxy, but it is shrunk by team plate appearances so April noise does not overwhelm the model.',
+    source: 'MLB Stats API',
+  },
+  {
+    name: 'Park factor',
+    formula: String.raw`\left(\text{park factor}\right)^{0.50}`,
+    description: 'Park context still matters, but it is damped rather than fully multiplied so the venue informs the number without dictating it.',
+    source: 'FanGraphs',
+  },
+  {
+    name: 'Temp factor',
+    formula: String.raw`T<55^\circ\!F\to0.92,\ T>80^\circ\!F\to1.06,\ \text{else }1.00`,
+    description: 'Cold air suppresses carry and hot air helps it slightly. Fixed-roof and retractable-roof parks are treated as neutral to avoid fake weather edge when roof state is unknown.',
+    source: 'Open-Meteo',
+  },
+  {
+    name: 'Wind factor',
+    formula: String.raw`\ge10\ \mathrm{mph}:\ \text{in}\to0.93,\ \text{out}\to1.08,\ \text{cross}\to1.00`,
+    description: 'Wind direction is resolved relative to each park\'s outfield orientation, then the total weather effect is damped so one forecast input cannot create an unrealistic number.',
+    source: 'Open-Meteo',
+  },
+] as const
+
 export default function MethodologyView() {
   return (
     <div className="mx-auto max-w-3xl px-4 py-8 text-sm text-slate-700">
@@ -15,81 +80,36 @@ export default function MethodologyView() {
       {/* Step 1 */}
       <Section title="Step 1 — Estimate λ (expected runs) for each half-inning">
         <p className="mb-3 leading-relaxed">
-          λ represents the expected number of runs scored by one team in the first inning.
-          It starts at a baseline of <Mono>0.50</Mono> (the historical MLB average for a half-inning)
-          and is scaled by six factors:
+          <InlineMath math={String.raw`\lambda`} /> represents the expected number of runs scored by one team in the first inning.
+          The model starts from a baseline of <InlineMath math="0.36" />, which corresponds to roughly a
+          league-average YRFI rate of <InlineMath math="51.4\%" />, and then adjusts that baseline with seven
+          stabilized inputs.
         </p>
-        <FormulaBlock>
-          λ = 0.50 × FIP factor × K% factor × Barrel factor × OBP factor × Park factor × Weather factors
-        </FormulaBlock>
+        <FormulaBlock math={lambdaMath} />
 
-        <FactorTable factors={[
-          {
-            name: 'FIP factor',
-            formula: 'pitcher FIP ÷ 3.80',
-            description: 'Scales λ up for bad pitchers (high FIP) and down for elite ones. FIP weights only the outcomes a pitcher controls: home runs, walks, hit-by-pitches, and strikeouts.',
-            source: 'MLB Stats API',
-          },
-          {
-            name: 'K% factor',
-            formula: 'clamp(1 + 0.3 × (0.23 − K%) ÷ 0.23,  0.85 → 1.15)',
-            description: 'A high strikeout rate means fewer balls in play and fewer baserunners. Clamped so a single extreme K% can\'t swing λ by more than ±15%.',
-            source: 'MLB Stats API',
-          },
-          {
-            name: 'Barrel factor',
-            formula: 'pitcher barrel rate ÷ 8.0%',
-            description: 'Barrel rate (hard, optimal contact that almost always produces extra bases) is the best single-number proxy for how hittable a pitcher is beyond what FIP captures.',
-            source: 'Baseball Savant',
-          },
-          {
-            name: 'OBP factor',
-            formula: 'team OBP ÷ 0.310',
-            description: 'Teams that get on base more often score more runs. This adjusts λ for the batting lineup facing the pitcher.',
-            source: 'MLB Stats API',
-          },
-          {
-            name: 'Park factor',
-            formula: 'hardcoded per venue (FanGraphs 1.00 scale)',
-            description: 'Some parks inflate run-scoring (Coors Field: 1.28) while others suppress it (Petco Park: 0.88). Applied once, shared by both half-innings.',
-            source: 'FanGraphs',
-          },
-          {
-            name: 'Temp factor',
-            formula: '< 55°F → 0.92 · > 80°F → 1.06 · else 1.00',
-            description: 'Cold air is denser; baseballs carry less well. Hot air slightly increases carry. Dome/retractable-roof parks default to 1.00.',
-            source: 'Open-Meteo',
-          },
-          {
-            name: 'Wind factor',
-            formula: '≥ 10 mph blowing in → 0.93 · blowing out → 1.08 · else 1.00',
-            description: 'Wind direction is resolved relative to each park\'s outfield orientation. Blowing in suppresses fly balls; blowing out boosts them.',
-            source: 'Open-Meteo',
-          },
-        ]} />
+        <FactorTable factors={factorRows} />
 
         <p className="mt-4 text-slate-500 text-xs leading-relaxed">
-          Each team&apos;s λ uses that team&apos;s OBP and the <em>opposing</em> pitcher&apos;s stats —
+          Each team&apos;s <InlineMath math={String.raw`\lambda`} /> uses that team&apos;s OBP and the <em>opposing</em>
+          pitcher&apos;s stats,
           because the home team bats against the away starter, and vice versa.
-          League-average values are used for any pitcher listed as TBD.
+          The raw adjustment is then bounded to keep the model in a realistic MLB range, and league-average
+          values are only used when the starter identity or a required stat feed is actually missing.
         </p>
       </Section>
 
       {/* Step 2 */}
       <Section title="Step 2 — Compute P(YRFI) from both λ values">
         <p className="mb-3 leading-relaxed">
-          Under a Poisson model, the probability of scoring <em>zero</em> runs given expected rate λ is simply{' '}
-          <Mono>e^(−λ)</Mono>. YRFI hits when <em>either</em> team scores, so:
+          Under a Poisson model, the probability of scoring <em>zero</em> runs given expected rate{' '}
+          <InlineMath math={String.raw`\lambda`} /> is <InlineMath math={String.raw`e^{-\lambda}`} />. YRFI hits
+          when <em>either</em> team scores, so:
         </p>
-        <FormulaBlock>
-          P(YRFI) = 1 − P(home scores 0) × P(away scores 0){'\n'}
-          P(YRFI) = 1 − e^(−λ_home) × e^(−λ_away){'\n'}
-          P(YRFI) = 1 − e^(−λ_home − λ_away)
-        </FormulaBlock>
+        <FormulaBlock math={yrfiMath} />
         <p className="mt-3 text-slate-500 text-xs leading-relaxed">
           This assumes independence between the two half-innings, which is a reasonable approximation
-          since different batters face different pitchers. At league-average inputs both λ values equal
-          0.50, giving P(YRFI) = 1 − e^(−1) ≈ <strong>63.2%</strong>.
+          since different batters face different pitchers. At league-average inputs both half-innings have
+          <InlineMath math={String.raw`\lambda = 0.36`} />, which gives <InlineMath math={String.raw`P(\mathrm{YRFI}) = 1 - e^{-0.72} \approx 51.3\%`} />.
         </p>
       </Section>
 
@@ -99,14 +119,12 @@ export default function MethodologyView() {
           The &quot;Bet at&quot; column shows the worst odds at which a YRFI bet still has positive expected
           value. If the sportsbook offers better odds than this, the bet is +EV.
         </p>
-        <FormulaBlock>
-          p ≥ 0.50  →  break-even = −⌈100p ÷ (1 − p)⌉   (favorite){'\n'}
-          p &lt; 0.50  →  break-even = +⌈100(1 − p) ÷ p⌉  (underdog)
-        </FormulaBlock>
+        <FormulaBlock math={oddsMath} />
         <p className="mt-3 text-slate-500 text-xs leading-relaxed">
-          Ceiling (⌈⌉) is used instead of rounding so the threshold is always conservative —
+          The ceiling function is used instead of rounding so the threshold is always conservative,
           you need odds <em>at least</em> this good, not just approximately this good.
-          A <Mono>~</Mono> prefix means one or both pitchers were TBD at the time of calculation;
+          A <Mono>~</Mono> prefix means one or both pitchers were TBD or the model had to fall back
+          to league-average inputs because pitcher data was missing,
           treat those numbers as estimates.
         </p>
       </Section>
@@ -118,7 +136,7 @@ export default function MethodologyView() {
           <li>Bullpen usage or opener strategies</li>
           <li>In-game factors like pitch count, injury, or weather changes mid-game</li>
           <li>Umpire tendencies or day/night splits</li>
-          <li>Sample size noise early in the season (fewer than ~50 IP = league-average Savant stats used)</li>
+          <li>Residual sample-size noise early in the season, even after shrinkage toward league averages</li>
         </ul>
         <p className="mt-3 text-slate-500 text-xs leading-relaxed">
           This model is a starting point for identifying value, not a guaranteed edge.
@@ -162,11 +180,11 @@ function Section({ title, children }: { title: string; children: React.ReactNode
   )
 }
 
-function FormulaBlock({ children }: { children: React.ReactNode }) {
+function FormulaBlock({ math }: { math: string }) {
   return (
-    <pre className="bg-slate-50 border border-slate-200 rounded-lg px-4 py-3 text-xs text-slate-700 font-mono whitespace-pre-wrap leading-relaxed overflow-x-auto">
-      {children}
-    </pre>
+    <div className="methodology-formula overflow-x-auto rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-slate-800">
+      <BlockMath math={math} />
+    </div>
   )
 }
 
@@ -175,7 +193,7 @@ function Mono({ children }: { children: React.ReactNode }) {
 }
 
 function FactorTable({ factors }: {
-  factors: { name: string; formula: string; description: string; source: string }[]
+  factors: ReadonlyArray<{ name: string; formula: string; description: string; source: string }>
 }) {
   return (
     <div className="rounded-xl border border-slate-200 overflow-hidden">
@@ -192,7 +210,11 @@ function FactorTable({ factors }: {
           {factors.map((f, i) => (
             <tr key={f.name} className={i % 2 === 0 ? 'bg-white' : 'bg-slate-50/50'}>
               <td className="px-4 py-3 font-medium text-slate-800 whitespace-nowrap align-top">{f.name}</td>
-              <td className="px-4 py-3 font-mono text-slate-600 align-top">{f.formula}</td>
+              <td className="px-4 py-3 align-top text-slate-600">
+                <div className="methodology-inline-formula overflow-x-auto whitespace-nowrap">
+                  <InlineMath math={f.formula} />
+                </div>
+              </td>
               <td className="px-4 py-3 text-slate-500 leading-relaxed align-top">{f.description}</td>
               <td className="px-4 py-3 text-slate-400 whitespace-nowrap align-top">{f.source}</td>
             </tr>

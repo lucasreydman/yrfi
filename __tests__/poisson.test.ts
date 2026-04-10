@@ -1,8 +1,10 @@
 import {
+  BASE_LAMBDA,
   computeLambda,
   computeYrfiProbability,
   breakEvenOdds,
   formatOdds,
+  shrinkTowardAverage,
   tempFactor,
   windFactor,
 } from '@/lib/poisson'
@@ -59,34 +61,35 @@ describe('computeLambda', () => {
     outfieldFacingDegrees: 0,
   }
 
-  it('returns base lambda (0.50) for all-average inputs', () => {
+  it('returns calibrated base lambda for all-average inputs', () => {
     const result = computeLambda(avgInputs)
-    expect(result).toBeCloseTo(0.50, 2)
+    expect(result).toBeCloseTo(BASE_LAMBDA, 2)
   })
 
   it('produces higher lambda for a bad pitcher (FIP 5.5)', () => {
     const result = computeLambda({ ...avgInputs, pitcherFip: 5.5 })
-    expect(result).toBeGreaterThan(0.50)
+    expect(result).toBeGreaterThan(BASE_LAMBDA)
   })
 
   it('produces lower lambda for an elite pitcher (FIP 2.5)', () => {
     const result = computeLambda({ ...avgInputs, pitcherFip: 2.5 })
-    expect(result).toBeLessThan(0.50)
+    expect(result).toBeLessThan(BASE_LAMBDA)
   })
 
   it('produces higher lambda for high barrel rate (12%)', () => {
     const result = computeLambda({ ...avgInputs, pitcherBarrelRate: 12 })
-    expect(result).toBeGreaterThan(0.50)
+    expect(result).toBeGreaterThan(BASE_LAMBDA)
   })
 
   it('produces lower lambda for low barrel rate (4%)', () => {
     const result = computeLambda({ ...avgInputs, pitcherBarrelRate: 4 })
-    expect(result).toBeLessThan(0.50)
+    expect(result).toBeLessThan(BASE_LAMBDA)
   })
 
   it('produces higher lambda for Coors Field (park factor 1.30)', () => {
     const result = computeLambda({ ...avgInputs, parkFactor: 1.30 })
-    expect(result).toBeCloseTo(0.65, 2)
+    expect(result).toBeGreaterThan(BASE_LAMBDA)
+    expect(result).toBeLessThan(0.45)
   })
 
   it('clamps K% factor between 0.85 and 1.15', () => {
@@ -100,11 +103,23 @@ describe('computeLambda', () => {
   })
 })
 
+describe('shrinkTowardAverage', () => {
+  it('returns the average when sample size is zero', () => {
+    expect(shrinkTowardAverage(0.400, 0.310, 0, 600)).toBeCloseTo(0.310, 5)
+  })
+
+  it('moves noisy values toward the league average', () => {
+    const shrunk = shrinkTowardAverage(0.400, 0.310, 50, 600)
+    expect(shrunk).toBeGreaterThan(0.310)
+    expect(shrunk).toBeLessThan(0.400)
+  })
+})
+
 describe('computeYrfiProbability', () => {
   it('returns correct YRFI probability from two lambdas', () => {
-    // P(YRFI) = 1 - e^(-0.5) * e^(-0.5) = 1 - e^(-1) ≈ 0.6321
-    const result = computeYrfiProbability(0.50, 0.50)
-    expect(result).toBeCloseTo(0.6321, 3)
+    // P(YRFI) = 1 - e^(-0.36) * e^(-0.36) = 1 - e^(-0.72) ≈ 0.5132
+    const result = computeYrfiProbability(0.36, 0.36)
+    expect(result).toBeCloseTo(0.5132, 3)
   })
 
   it('returns higher probability when lambdas are higher', () => {

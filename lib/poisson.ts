@@ -2,9 +2,38 @@ export const LEAGUE_AVG_FIP = 3.80
 export const LEAGUE_AVG_K_PCT = 0.23
 export const LEAGUE_AVG_BARREL_PCT = 8.0
 export const LEAGUE_AVG_OBP = 0.310
-export const BASE_LAMBDA = 0.50
+export const BASE_LAMBDA = 0.36
 export const FIP_CONSTANT = 3.10
 export const LEAGUE_AVG_HARD_HIT_PCT = 38.0
+export const PITCHER_FIP_STABILIZATION_IP = 45
+export const PITCHER_K_STABILIZATION_BF = 150
+export const TEAM_OBP_STABILIZATION_PA = 600
+export const SAVANT_STABILIZATION_IP = 50
+
+const FIP_FACTOR_WEIGHT = 0.55
+const BARREL_FACTOR_WEIGHT = 0.35
+const OBP_FACTOR_WEIGHT = 0.70
+const PARK_FACTOR_WEIGHT = 0.50
+const WEATHER_FACTOR_WEIGHT = 0.50
+const MIN_ADJUSTMENT_FACTOR = 0.55
+const MAX_ADJUSTMENT_FACTOR = 1.55
+
+function clamp(value: number, min: number, max: number): number {
+  return Math.max(min, Math.min(max, value))
+}
+
+export function shrinkTowardAverage(
+  value: number,
+  average: number,
+  sampleSize: number,
+  stabilizationSample: number,
+): number {
+  if (!Number.isFinite(value)) return average
+  if (sampleSize <= 0 || stabilizationSample <= 0) return average
+
+  const weight = sampleSize / (sampleSize + stabilizationSample)
+  return average + (value - average) * weight
+}
 
 export function tempFactor(tempF: number): number {
   if (tempF < 55) return 0.92
@@ -52,19 +81,26 @@ export function computeLambda(params: LambdaParams): number {
     outfieldFacingDegrees,
   } = params
 
-  const fipFactor = pitcherFip / LEAGUE_AVG_FIP
+  const fipFactor = Math.pow(pitcherFip / LEAGUE_AVG_FIP, FIP_FACTOR_WEIGHT)
 
   const rawKFactor = 1 + 0.3 * (LEAGUE_AVG_K_PCT - pitcherKPct) / LEAGUE_AVG_K_PCT
   const kFactor = Math.max(0.85, Math.min(1.15, rawKFactor))
 
-  const barrelFactor = pitcherBarrelRate / LEAGUE_AVG_BARREL_PCT
+  const barrelFactor = Math.pow(pitcherBarrelRate / LEAGUE_AVG_BARREL_PCT, BARREL_FACTOR_WEIGHT)
 
-  const obpFactor = teamOBP / LEAGUE_AVG_OBP
+  const obpFactor = Math.pow(teamOBP / LEAGUE_AVG_OBP, OBP_FACTOR_WEIGHT)
 
   const tf = tempFactor(tempF)
   const wf = windFactor(windSpeedMph, windFromDegrees, outfieldFacingDegrees)
+  const parkAdjustment = Math.pow(parkFactor, PARK_FACTOR_WEIGHT)
+  const weatherAdjustment = Math.pow(tf * wf, WEATHER_FACTOR_WEIGHT)
+  const combinedAdjustment = clamp(
+    fipFactor * kFactor * barrelFactor * obpFactor * parkAdjustment * weatherAdjustment,
+    MIN_ADJUSTMENT_FACTOR,
+    MAX_ADJUSTMENT_FACTOR,
+  )
 
-  return BASE_LAMBDA * fipFactor * kFactor * barrelFactor * obpFactor * parkFactor * tf * wf
+  return BASE_LAMBDA * combinedAdjustment
 }
 
 export function computeYrfiProbability(lambdaHome: number, lambdaAway: number): number {

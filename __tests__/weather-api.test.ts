@@ -15,4 +15,9 @@ describe('getStadiumConstants', () => {
   it('has all 30 stadiums defined', () => {
     expect(Object.keys(STADIUMS).length).toBe(30)
   })
+
+  it('marks roofed parks as weather controlled', () => {
+    expect(getStadiumConstants(12)?.weatherControlled).toBe(true)
+    expect(getStadiumConstants(15)?.weatherControlled).toBe(true)
+  })
 })

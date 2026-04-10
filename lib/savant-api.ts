@@ -1,9 +1,13 @@
 import Papa from 'papaparse'
 import type { SavantStats } from './types'
 import { kvGet, kvSet } from './kv'
-import { LEAGUE_AVG_BARREL_PCT, LEAGUE_AVG_HARD_HIT_PCT } from './poisson'
+import {
+  LEAGUE_AVG_BARREL_PCT,
+  LEAGUE_AVG_HARD_HIT_PCT,
+  SAVANT_STABILIZATION_IP,
+  shrinkTowardAverage,
+} from './poisson'
 
-const MIN_IP = 50
 const KV_TTL_SECONDS = 12 * 60 * 60 // 12 hours
 
 function savantKey(year: number): string {
@@ -23,7 +27,6 @@ export function parseSavantCsv(csv: string): SavantStore {
 
   for (const row of data) {
     const ip = parseIP(row['p_formatted_ip'] ?? '0')
-    if (ip < MIN_IP) continue
 
     const playerId = parseInt(row['player_id'], 10)
     if (isNaN(playerId)) continue
@@ -42,12 +45,23 @@ export function parseSavantCsv(csv: string): SavantStore {
 export function getSavantStats(
   playerId: number,
   store: SavantStore
-): Pick<SavantStats, 'barrelRate' | 'hardHitRate'> {
+): Pick<SavantStats, 'barrelRate' | 'hardHitRate' | 'inningsPitched'> & { usedFallback: boolean } {
   const entry = store[String(playerId)]
   if (!entry) {
-    return { barrelRate: LEAGUE_AVG_BARREL_PCT, hardHitRate: LEAGUE_AVG_HARD_HIT_PCT }
+    return {
+      barrelRate: LEAGUE_AVG_BARREL_PCT,
+      hardHitRate: LEAGUE_AVG_HARD_HIT_PCT,
+      inningsPitched: 0,
+      usedFallback: true,
+    }
   }
-  return { barrelRate: entry.barrelRate, hardHitRate: entry.hardHitRate }
+
+  return {
+    barrelRate: shrinkTowardAverage(entry.barrelRate, LEAGUE_AVG_BARREL_PCT, entry.inningsPitched, SAVANT_STABILIZATION_IP),
+    hardHitRate: shrinkTowardAverage(entry.hardHitRate, LEAGUE_AVG_HARD_HIT_PCT, entry.inningsPitched, SAVANT_STABILIZATION_IP),
+    inningsPitched: entry.inningsPitched,
+    usedFallback: false,
+  }
 }
 
 async function fetchSavantCsv(year: number): Promise<string> {

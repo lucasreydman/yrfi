@@ -13,6 +13,7 @@ export interface PitcherStats {
   barrelRate: number       // from Savant; league avg fallback if < 50 IP or missing
   hardHitRate: number      // from Savant; league avg fallback
   confirmed: boolean       // false if TBD — league avg stats used
+  estimated: boolean       // true if model used fallback inputs because data was missing
 }
 
 export interface WeatherData {
@@ -20,6 +21,7 @@ export interface WeatherData {
   windSpeedMph: number
   windFromDegrees: number  // direction wind is coming FROM (Open-Meteo convention)
   failure: boolean         // true if fetch failed; model factors default to 1.0
+  controlled: boolean      // true for roofed/retractable parks where weather is neutralized
 }
 
 export interface GameResult {

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { kvGet, kvSet } from '@/lib/kv'
 import { fetchSchedule } from '@/lib/mlb-api'
-import { fetchPitcherFipAndKPct, fetchTeamOBP, fetchLinescore } from '@/lib/mlb-api'
+import { fetchPitcherModelStats, fetchTeamOffenseStats, fetchLinescore } from '@/lib/mlb-api'
 import { loadSavantStore, getSavantStats } from '@/lib/savant-api'
 import { fetchWeather, getOutfieldFacingDegrees } from '@/lib/weather-api'
 import { getParkFactor } from '@/lib/park-factors'
@@ -24,7 +24,10 @@ function getPacificDate(): string {
   return new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Los_Angeles' }).format(new Date())
 }
 
-function currentSeason(): number {
+function seasonForDate(date: string): number {
+  const parsedYear = parseInt(date.slice(0, 4), 10)
+  if (!Number.isNaN(parsedYear)) return parsedYear
+
   const pacificDate = getPacificDate()
   return parseInt(pacificDate.split('-')[0], 10)
 }
@@ -38,7 +41,7 @@ export async function GET(req: NextRequest) {
   if (cached) return NextResponse.json(cached)
 
   try {
-    const season = currentSeason()
+    const season = seasonForDate(date)
     const games = await fetchSchedule(date)
 
     if (games.length === 0) {
@@ -73,19 +76,25 @@ export async function GET(req: NextRequest) {
     const teamIds = [...new Set(games.flatMap(g => [g.teams.home.team.id, g.teams.away.team.id]))]
 
     const [pitcherStats, teamOBPs] = await Promise.all([
-      Promise.all(pitcherIds.map(async id => ({ id, stats: await fetchPitcherFipAndKPct(id, season) }))),
-      Promise.all(teamIds.map(async id => ({ id, obp: await fetchTeamOBP(id, season) }))),
+      Promise.all(pitcherIds.map(async id => ({ id, stats: await fetchPitcherModelStats(id, season) }))),
+      Promise.all(teamIds.map(async id => ({ id, stats: await fetchTeamOffenseStats(id, season) }))),
     ])
 
     const pitcherStatsMap = new Map(pitcherStats.map(p => [p.id, p.stats]))
-    const teamOBPMap = new Map(teamOBPs.map(t => [t.id, t.obp]))
+    const teamOBPMap = new Map(teamOBPs.map(t => [t.id, t.stats]))
 
     // Build results
     const results: GameResult[] = await Promise.all(
       games.map(async (game): Promise<GameResult> => {
         const gameStatus = getGameStatus(game.status.detailedState)
         const venueId = game.venue.id
-        const weather = weatherByVenue.get(venueId) ?? { tempF: 72, windSpeedMph: 0, windFromDegrees: 0, failure: false }
+        const weather = weatherByVenue.get(venueId) ?? {
+          tempF: 72,
+          windSpeedMph: 0,
+          windFromDegrees: 0,
+          failure: false,
+          controlled: false,
+        }
         const parkFactor = getParkFactor(venueId)
         const outfieldFacing = getOutfieldFacingDegrees(venueId)
 
@@ -98,28 +107,46 @@ export async function GET(req: NextRequest) {
               fip: LEAGUE_AVG_FIP, kPct: LEAGUE_AVG_K_PCT,
               barrelRate: LEAGUE_AVG_BARREL_PCT, hardHitRate: LEAGUE_AVG_HARD_HIT_PCT,
               confirmed: false,
+              estimated: true,
             }
           }
-          const stats = pitcherStatsMap.get(pitcher.id) ?? { fip: LEAGUE_AVG_FIP, kPct: LEAGUE_AVG_K_PCT }
+          const stats = pitcherStatsMap.get(pitcher.id) ?? {
+            fip: LEAGUE_AVG_FIP,
+            kPct: LEAGUE_AVG_K_PCT,
+            inningsPitched: 0,
+            battersFaced: 0,
+            usedFallback: true,
+          }
           const savant = getSavantStats(pitcher.id, savantStore)
           return {
             playerId: pitcher.id, name: pitcher.fullName,
             fip: stats.fip, kPct: stats.kPct,
             barrelRate: savant.barrelRate, hardHitRate: savant.hardHitRate,
             confirmed: true,
+            estimated: stats.usedFallback || savant.usedFallback,
           }
         }
 
         const homePitcher = buildPitcherStats(game.teams.home.probablePitcher)
         const awayPitcher = buildPitcherStats(game.teams.away.probablePitcher)
-        const homeOBP = teamOBPMap.get(game.teams.home.team.id) ?? LEAGUE_AVG_OBP
-        const awayOBP = teamOBPMap.get(game.teams.away.team.id) ?? LEAGUE_AVG_OBP
+        const homeOffense = teamOBPMap.get(game.teams.home.team.id) ?? {
+          obp: LEAGUE_AVG_OBP,
+          plateAppearances: 0,
+          usedFallback: true,
+        }
+        const awayOffense = teamOBPMap.get(game.teams.away.team.id) ?? {
+          obp: LEAGUE_AVG_OBP,
+          plateAppearances: 0,
+          usedFallback: true,
+        }
+        const homeOBP = homeOffense.obp
+        const awayOBP = awayOffense.obp
 
         const sharedEnv = {
           parkFactor,
-          tempF: weather.failure ? 72 : weather.tempF,
-          windSpeedMph: weather.failure ? 0 : weather.windSpeedMph,
-          windFromDegrees: weather.failure ? 0 : weather.windFromDegrees,
+          tempF: weather.failure || weather.controlled ? 72 : weather.tempF,
+          windSpeedMph: weather.failure || weather.controlled ? 0 : weather.windSpeedMph,
+          windFromDegrees: weather.failure || weather.controlled ? 0 : weather.windFromDegrees,
           outfieldFacingDegrees: outfieldFacing,
         }
 

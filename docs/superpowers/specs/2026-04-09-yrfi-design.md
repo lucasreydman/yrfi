@@ -83,38 +83,38 @@ lib/
 ### λ (Expected First-Inning Runs) Per Half-Inning
 
 ```
-Base λ = 0.50  (league average first-inning runs per half-inning)
+Base λ = 0.36  (calibrated to an observed MLB YRFI baseline around 51.4%)
 
-Adjustments (all multiplicative):
+Adjustments (stabilized and damped before being combined):
 
   FIP factor:
-    = pitcher_FIP / league_avg_FIP
+    = (shrunk_pitcher_FIP / league_avg_FIP)^0.55
     Higher pitcher FIP (worse) → factor > 1 → λ increases ✓
-    e.g. FIP 5.00 vs avg 3.80 → 5.00/3.80 = 1.32
+    FIP is shrunk toward league average using innings pitched before this factor is applied
 
   K% factor (dampened, since K% is partially captured by FIP):
-    = clamp(1 + 0.3 × (league_avg_K% − pitcher_K%) / league_avg_K%, 0.85, 1.15)
+    = clamp(1 + 0.3 × (league_avg_K% − shrunk_pitcher_K%) / league_avg_K%, 0.85, 1.15)
     Higher K% (better) → factor < 1 → λ decreases ✓
-    e.g. pitcher K% 30% vs avg 23% → 1 + 0.3×(0.23−0.30)/0.23 = 0.909, clamped to max(0.85, 0.909) = 0.909
+    K% is shrunk toward league average using batters faced before this factor is applied
 
   Barrel factor:
-    = pitcher_barrel_rate% / league_avg_barrel_rate%
+    = (shrunk_pitcher_barrel_rate% / league_avg_barrel_rate%)^0.35
     Higher barrel rate allowed (worse) → factor > 1 → λ increases ✓
-    e.g. barrel% 12 vs avg 8 → 12/8 = 1.50
+    Barrel rate is shrunk toward league average using innings pitched so small samples do not overreact
 
   OBP factor:
-    = team_season_OBP / league_avg_OBP
+    = (shrunk_team_season_OBP / league_avg_OBP)^0.70
     Higher team OBP (better offense) → factor > 1 → λ increases ✓
-    e.g. team OBP .340 vs avg .310 → .340/.310 = 1.097
+    Team OBP is shrunk toward league average using team plate appearances
 
   Park factor:
-    = stadium runs park factor (1.00 scale; neutral = 1.00)
+    = stadium_runs_park_factor^0.50
     Source: FanGraphs park factors, 1.00-scale (e.g. Coors Field ≈ 1.30, Petco Park ≈ 0.88)
     Applied equally to both half-innings (both teams play in the same park)
 
   Temp factor:
     < 55°F  → 0.92
-    55–75°F → 1.00
+    55–80°F → 1.00
     > 80°F  → 1.06
 
   Wind factor:
@@ -132,7 +132,13 @@ Adjustments (all multiplicative):
     else:
       wind_factor = 1.00
 
-λ = base × FIP_factor × K%_factor × barrel_factor × OBP_factor × park_factor × temp_factor × wind_factor
+  Roof handling:
+    Fixed-roof and retractable-roof parks are treated as weather-neutral (temp = 1.00, wind = 1.00)
+    because roof state is not available reliably enough pregame to price weather edge honestly
+
+raw_adjustment = FIP_factor × K%_factor × barrel_factor × OBP_factor × park_factor × (temp_factor × wind_factor)^0.50
+bounded_adjustment = clamp(raw_adjustment, 0.55, 1.55)
+λ = base × bounded_adjustment
 ```
 
 League averages (constants in `poisson.ts`, updated each season):
@@ -141,7 +147,7 @@ const LEAGUE_AVG_FIP = 3.80
 const LEAGUE_AVG_K_PCT = 0.23
 const LEAGUE_AVG_BARREL_PCT = 8.0   // expressed as percentage (0–100 scale)
 const LEAGUE_AVG_OBP = 0.310
-const BASE_LAMBDA = 0.50
+const BASE_LAMBDA = 0.36
 const FIP_CONSTANT = 3.10           // ERA-scaling constant used in FIP formula
 ```
 
@@ -154,6 +160,12 @@ P(YRFI) = 1 − P(home scores 0) × P(away scores 0)
 ```
 
 The two half-innings are treated as independent (standard Poisson assumption, appropriate here).
+
+At league-average inputs both λ values are 0.36, so:
+
+```
+P(YRFI) = 1 − e^(−0.36 − 0.36) = 1 − e^(−0.72) ≈ 51.3%
+```
 
 ### From YRFI Probability to Break-Even American Odds
 
@@ -188,6 +200,7 @@ interface PitcherStats {
   barrelRate: number         // from Savant; league avg fallback if missing
   hardHitRate: number        // from Savant; league avg fallback if missing
   confirmed: boolean         // false if TBD — uses league avg stats
+  estimated: boolean         // true if pitcher identity or required stat feed was missing and league-average inputs were used
 }
 
 interface WeatherData {
@@ -195,6 +208,7 @@ interface WeatherData {
   windSpeedMph: number
   windFromDegrees: number    // direction wind is coming FROM
   failure: boolean           // true if Open-Meteo fetch failed; factors default to 1.0
+  controlled: boolean        // true if weather is neutralized because the park is roofed/retractable
 }
 
 interface GameResult {

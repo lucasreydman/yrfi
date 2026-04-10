@@ -41,7 +41,7 @@ function MobileResultBadge({ game }: { game: GameResult }) {
 
 function MobileCard({ game }: { game: GameResult }) {
   const { settings } = useSettings()
-  const estimated = !game.homePitcher.confirmed || !game.awayPitcher.confirmed
+  const estimated = game.homePitcher.estimated || game.awayPitcher.estimated
   const awayTeam = getTeamDisplayName(game.awayTeam)
   const homeTeam = getTeamDisplayName(game.homeTeam)
   const pct = `${estimated ? '~' : ''}${(game.yrfiProbability * 100).toFixed(1)}%`
@@ -56,11 +56,11 @@ function MobileCard({ game }: { game: GameResult }) {
     ? 'text-green-700' : game.yrfiProbability >= 0.45
     ? 'text-yellow-600' : 'text-red-600'
 
-  const tempStr = game.weather.failure ? '—' : settings.tempUnit === 'C'
+  const tempStr = game.weather.controlled ? 'Roof' : game.weather.failure ? '—' : settings.tempUnit === 'C'
     ? `${Math.round((game.weather.tempF - 32) * 5 / 9)}°C`
     : `${game.weather.tempF}°F`
 
-  const windStr = game.weather.failure ? '—' : game.weather.windSpeedMph < 5 ? 'Calm'
+  const windStr = game.weather.controlled ? 'Roof' : game.weather.failure ? '—' : game.weather.windSpeedMph < 5 ? 'Calm'
     : settings.windUnit === 'kmh'
       ? `${Math.round(game.weather.windSpeedMph * 1.60934)} km/h`
       : `${game.weather.windSpeedMph} mph`

@@ -1,0 +1,6 @@
+- [x] Review current model calibration and failure modes
+- [x] Recalibrate baseline and add shrinkage/guardrails
+- [x] Fix roof/weather handling and estimated fallback labeling
+- [x] Add backtest tooling and validation metrics
+- [x] Update tests and documentation
+- [x] Run lint, tests, and backtest smoke check

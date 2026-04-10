@@ -43,6 +43,7 @@ function formatOddsDisplay(
 }
 
 function formatTemp(weather: GameResult['weather'], tempUnit: 'F' | 'C'): string {
+  if (weather.controlled) return 'Roof'
   if (weather.failure) return '—'
   return tempUnit === 'C'
     ? `${Math.round((weather.tempF - 32) * 5 / 9)}°C`
@@ -50,6 +51,7 @@ function formatTemp(weather: GameResult['weather'], tempUnit: 'F' | 'C'): string
 }
 
 function formatWind(weather: GameResult['weather'], windUnit: 'mph' | 'kmh'): string {
+  if (weather.controlled) return 'Roof'
   if (weather.failure) return '—'
   if (weather.windSpeedMph < 5) return 'Calm'
   return windUnit === 'kmh'
@@ -72,7 +74,7 @@ function ResultBadge({ game }: { game: GameResult }) {
 
 export default function GameRow({ game }: GameRowProps) {
   const { settings } = useSettings()
-  const estimated = !game.homePitcher.confirmed || !game.awayPitcher.confirmed
+  const estimated = game.homePitcher.estimated || game.awayPitcher.estimated
   const awayTeam = getTeamDisplayName(game.awayTeam)
   const homeTeam = getTeamDisplayName(game.homeTeam)
   const pct = formatPct(game.yrfiProbability, estimated)

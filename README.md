@@ -26,7 +26,7 @@ No sportsbook integration — you compare the threshold against your own book an
 |---|---|---|
 | MLB Stats API (`statsapi.mlb.com/api/v1`) | Schedule, starting pitchers, pitcher season stats (FIP components), team OBP, boxscore linescore | None |
 | Baseball Savant (`baseballsavant.mlb.com`) | Pitcher barrel rate, hard-hit rate — season CSV, cached 12hr | None |
-| Open-Meteo (`api.open-meteo.com`) | Temperature, wind speed, wind direction per venue (supports tomorrow's forecast) | None |
+| Open-Meteo (`api.open-meteo.com`) | Temperature, wind speed, wind direction per venue (forecast for upcoming games, archive for backtests) | None |
 
 All sources are free with no API key required.
 
@@ -37,8 +37,10 @@ All sources are free with no API key required.
 The model uses a **Poisson distribution** to estimate expected first-inning runs (λ) per half-inning.
 
 ```
-λ = 0.50 × FIP_factor × K%_factor × barrel_factor × OBP_factor × park_factor × temp_factor × wind_factor
+λ = 0.36 × bounded_adjustment_score
 ```
+
+The adjustment score is built from stabilized pitcher FIP, K%, Savant barrel rate, team OBP, park factor, and weather. Noisy early-season inputs are shrunk toward league average, correlated factors are damped, and the combined adjustment is bounded to keep the model in a realistic MLB range.
 
 **P(YRFI)** = 1 − P(home scores 0) × P(away scores 0) = 1 − e^(−λ_home) × e^(−λ_away)
 
@@ -98,6 +100,7 @@ npm run dev       # Start dev server at localhost:3000
 npm run build     # Production build
 npm run lint      # ESLint
 npm test          # Jest (lib/ unit tests)
+npm run backtest -- 2025-04-01 2025-04-30  # Historical calibration run
 npx vercel --prod # Deploy to production
 ```
 
@@ -113,7 +116,8 @@ npx vercel --prod # Deploy to production
 - **YRFI % display:** Percentages render to one decimal place
 - **Result column:** Upcoming shows `—`, in-progress first innings show `IP`, scoring first innings show `RUN`, and scoreless first innings show `NO RUN`
 - **Desktop table alignment:** Temp, Wind, Time, and Result use centered fixed-width columns for uniform spacing
-- **TBD pitchers:** Model runs with league-average stats; values prefixed with `~`
+- **TBD or missing pitcher data:** Model falls back to league-average inputs; values prefixed with `~`
+- **Roofed/retractable parks:** Weather is neutralized and the UI shows `Roof`
 - **Weather failure:** Factors default to 1.0; weather column shows `—`
 - **Preferences:** Temperature unit, wind unit, odds format, timezone — persisted in localStorage
 
