@@ -122,6 +122,41 @@ export default function MethodologyView() {
         </p>
       </div>
 
+      <Section title="Why YRFI?">
+        <p className="leading-relaxed text-slate-600">
+          The starting point for this project is simple: books often shade extra vig into NRFI because it is the cleaner,
+          more popular public bet. A scoreless first inning feels intuitive, casual bettors gravitate to it, and that demand
+          can make the opposite side more interesting than it looks at first glance.
+        </p>
+        <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-3">
+          <article className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm shadow-slate-200/40">
+            <div className="text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-green-700">Public bias</div>
+            <p className="mt-2 text-sm leading-relaxed text-slate-600">
+              NRFI is a heavily favored public betting angle because rooting for no runs feels safer than betting on instant offense.
+              That popularity gives sportsbooks room to price NRFI aggressively.
+            </p>
+          </article>
+          <article className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm shadow-slate-200/40">
+            <div className="text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-green-700">Pricing effect</div>
+            <p className="mt-2 text-sm leading-relaxed text-slate-600">
+              When books lean into that demand, YRFI can become the less fashionable side with the more interesting price.
+              The edge is not that YRFI wins more often, it is that the offered odds can be better than the true probability implies.
+            </p>
+          </article>
+          <article className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm shadow-slate-200/40">
+            <div className="text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-green-700">Model goal</div>
+            <p className="mt-2 text-sm leading-relaxed text-slate-600">
+              This model exists to estimate fair YRFI probability first, then convert that into a break-even American price.
+              If the market offers a better number than that threshold, the bet is theoretically +EV.
+            </p>
+          </article>
+        </div>
+        <p className="mt-4 text-xs leading-relaxed text-slate-500">
+          That does not mean every YRFI is good or that every NRFI is bad. It means the question is about price, not just outcome.
+          The methodology below is built to answer that pricing question in a consistent way.
+        </p>
+      </Section>
+
       {/* Step 1 */}
       <Section title="Step 1 — Estimate λ (expected runs) for each half-inning">
         <p className="mb-3 leading-relaxed">
