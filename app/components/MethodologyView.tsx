@@ -125,7 +125,7 @@ export default function MethodologyView() {
         </p>
         <FormulaBlock math={stabilizationMath} align="left" className="mt-3 mb-3" />
         <p className="text-slate-500 text-xs leading-relaxed">
-          That means April samples are pulled harder toward league average, and the extra shrinkage fades linearly to neutral by July 1.
+          That means April samples are pulled harder toward league average, and the extra shrinkage fades linearly to neutral by July.
         </p>
 
         <p className="mt-4 text-slate-500 text-xs leading-relaxed">
