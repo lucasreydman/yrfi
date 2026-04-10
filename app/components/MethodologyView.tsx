@@ -163,15 +163,15 @@ export default function MethodologyView() {
       {/* Caveats */}
       <Section title="What the model doesn&apos;t capture">
         <ul className="space-y-1.5 text-slate-500 leading-relaxed list-disc list-inside">
-          <li>Full lineup construction beyond the confirmed lineup&apos;s top three hitters, including platoon splits and bench contingencies</li>
+          <li>Full lineup context beyond the confirmed top three hitters</li>
           <li>Bullpen usage or opener strategies</li>
           <li>In-game factors like pitch count, injury, or weather changes mid-game</li>
           <li>Umpire tendencies or day/night splits</li>
-          <li>Early-season samples are stabilized with heavier date-aware shrinkage, but April and May still carry more uncertainty than midseason</li>
+          <li>Early-season data is stabilized, but still noisier than midseason</li>
         </ul>
         <p className="mt-3 text-slate-500 text-xs leading-relaxed">
-          This model is a starting point for identifying value, not a guaranteed edge.
-          Always cross-reference with current lineup news before placing a bet.
+          A value screen, not a guarantee.
+          Check lineup news before betting.
         </p>
       </Section>
 
