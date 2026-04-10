@@ -34,6 +34,10 @@ html {
     line-height: 1.35;
   }
 
+  .methodology-formula--odds .katex {
+    font-size: 0.98rem;
+  }
+
   .methodology-inline-formula .katex {
     font-size: 0.94rem;
     white-space: normal;
@@ -57,6 +61,11 @@ html {
     .methodology-formula .katex {
       font-size: 0.6rem;
       line-height: 1.15;
+    }
+
+    .methodology-formula--odds .katex {
+      font-size: 0.54rem;
+      line-height: 1.05;
     }
 
     .methodology-inline-formula .katex {

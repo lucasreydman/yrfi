@@ -15,10 +15,9 @@ P(\mathrm{YRFI}) &= 1 - P(H=0)\,P(A=0) \\
 &= 1 - e^{-(\lambda_H + \lambda_A)}
 \end{aligned}`
 
-const oddsMath = String.raw`\mathrm{break\mbox{-}even\ odds}=
-\begin{cases}
--\left\lceil \dfrac{100p}{1-p} \right\rceil & p \ge 0.50 \\
-+\left\lceil \dfrac{100(1-p)}{p} \right\rceil & p < 0.50
+const oddsMath = String.raw`\begin{cases}
+-\left\lceil \frac{100p}{1-p} \right\rceil & p \ge 0.5 \\
++\left\lceil \frac{100(1-p)}{p} \right\rceil & p < 0.5
 \end{cases}`
 
 const stabilizationMath = String.raw`\begin{aligned}
@@ -175,7 +174,7 @@ export default function MethodologyView() {
           The &quot;Bet at&quot; column shows the worst odds at which a YRFI bet still has positive expected
           value. If the sportsbook offers better odds than this, the bet is +EV.
         </p>
-        <FormulaBlock math={oddsMath} className="mb-3" />
+        <OddsFormulaBlock math={oddsMath} className="mb-3" />
         <p className="mt-3 text-slate-500 text-xs leading-relaxed">
           The ceiling function is used instead of rounding so the threshold is always conservative,
           you need odds <em>at least</em> this good, not just approximately this good.
@@ -245,6 +244,22 @@ function FormulaBlock({
   return (
     <div className={`methodology-formula methodology-formula--${align} overflow-hidden rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-slate-800 ${className}`}>
       <BlockMath math={math} />
+    </div>
+  )
+}
+
+function OddsFormulaBlock({ math, className = '' }: { math: string; className?: string }) {
+  return (
+    <div className={`rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-slate-800 ${className}`}>
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:gap-4">
+        <div className="text-[0.65rem] font-semibold uppercase tracking-[0.14em] text-slate-500 sm:w-24 sm:pt-2">
+          <div>Break-even</div>
+          <div>odds</div>
+        </div>
+        <div className="methodology-formula methodology-formula--left methodology-formula--odds min-w-0 flex-1 overflow-hidden text-slate-800">
+          <BlockMath math={math} />
+        </div>
+      </div>
     </div>
   )
 }
