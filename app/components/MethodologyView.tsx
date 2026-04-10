@@ -71,7 +71,16 @@ export default function MethodologyView() {
       <div className="mb-8">
         <h2 className="text-xl font-bold text-slate-900 mb-2">How the model works</h2>
         <p className="text-slate-500 leading-relaxed">
-          YRFI uses a Poisson probability model to estimate the likelihood that at least one run
+          YRFI uses a{' '}
+          <a
+            href="https://www.geeksforgeeks.org/maths/poisson-distribution/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="font-medium text-slate-600 underline decoration-slate-300 decoration-1 underline-offset-2 transition-colors hover:text-slate-800 hover:decoration-slate-400"
+          >
+            Poisson probability model
+          </a>{' '}
+          to estimate the likelihood that at least one run
           scores in the first inning of each game. Each half-inning is modeled independently,
           then combined. The output is the minimum American odds at which a YRFI bet has positive expected value.
         </p>
@@ -85,13 +94,13 @@ export default function MethodologyView() {
           league-average YRFI rate of <InlineMath math="51.4\%" />, and then adjusts that baseline with seven
           stabilized inputs.
         </p>
-        <FormulaBlock math={lambdaMath} />
+        <FormulaBlock math={lambdaMath} align="left" className="mb-6" />
 
         <FactorTable factors={factorRows} />
 
         <p className="mt-4 text-slate-500 text-xs leading-relaxed">
           Each team&apos;s <InlineMath math={String.raw`\lambda`} /> uses that team&apos;s OBP and the <em>opposing</em>
-          pitcher&apos;s stats,
+          {' '}pitcher&apos;s stats,
           because the home team bats against the away starter, and vice versa.
           The raw adjustment is then bounded to keep the model in a realistic MLB range, and league-average
           values are only used when the starter identity or a required stat feed is actually missing.
@@ -105,7 +114,7 @@ export default function MethodologyView() {
           <InlineMath math={String.raw`\lambda`} /> is <InlineMath math={String.raw`e^{-\lambda}`} />. YRFI hits
           when <em>either</em> team scores, so:
         </p>
-        <FormulaBlock math={yrfiMath} />
+        <FormulaBlock math={yrfiMath} className="mb-3" />
         <p className="mt-3 text-slate-500 text-xs leading-relaxed">
           This assumes independence between the two half-innings, which is a reasonable approximation
           since different batters face different pitchers. At league-average inputs both half-innings have
@@ -119,7 +128,7 @@ export default function MethodologyView() {
           The &quot;Bet at&quot; column shows the worst odds at which a YRFI bet still has positive expected
           value. If the sportsbook offers better odds than this, the bet is +EV.
         </p>
-        <FormulaBlock math={oddsMath} />
+        <FormulaBlock math={oddsMath} className="mb-3" />
         <p className="mt-3 text-slate-500 text-xs leading-relaxed">
           The ceiling function is used instead of rounding so the threshold is always conservative,
           you need odds <em>at least</em> this good, not just approximately this good.
@@ -180,9 +189,17 @@ function Section({ title, children }: { title: string; children: React.ReactNode
   )
 }
 
-function FormulaBlock({ math }: { math: string }) {
+function FormulaBlock({
+  math,
+  align = 'center',
+  className = '',
+}: {
+  math: string
+  align?: 'left' | 'center'
+  className?: string
+}) {
   return (
-    <div className="methodology-formula overflow-x-auto rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-slate-800">
+    <div className={`methodology-formula methodology-formula--${align} overflow-x-auto rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-slate-800 ${className}`}>
       <BlockMath math={math} />
     </div>
   )
@@ -201,9 +218,8 @@ function FactorTable({ factors }: {
         <thead className="bg-slate-50 border-b border-slate-200">
           <tr>
             <th className="px-4 py-2 text-left font-semibold text-slate-500 uppercase tracking-wider w-[130px]">Factor</th>
-            <th className="px-4 py-2 text-left font-semibold text-slate-500 uppercase tracking-wider w-[200px]">Formula</th>
+            <th className="px-4 py-2 text-left font-semibold text-slate-500 uppercase tracking-wider w-[260px]">Formula</th>
             <th className="px-4 py-2 text-left font-semibold text-slate-500 uppercase tracking-wider">Rationale</th>
-            <th className="px-4 py-2 text-left font-semibold text-slate-500 uppercase tracking-wider w-[110px]">Source</th>
           </tr>
         </thead>
         <tbody>
@@ -216,7 +232,6 @@ function FactorTable({ factors }: {
                 </div>
               </td>
               <td className="px-4 py-3 text-slate-500 leading-relaxed align-top">{f.description}</td>
-              <td className="px-4 py-3 text-slate-400 whitespace-nowrap align-top">{f.source}</td>
             </tr>
           ))}
         </tbody>
