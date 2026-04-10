@@ -77,6 +77,14 @@ const factorRows = [
   },
 ] as const
 
+const caveats = [
+  'Full lineup context beyond the confirmed top three hitters',
+  'Bullpen usage or opener strategies',
+  'In-game factors like pitch count, injury, or weather changes mid-game',
+  'Umpire tendencies or day/night splits',
+  'Early-season data is stabilized, but still noisier than midseason',
+] as const
+
 export default function MethodologyView() {
   return (
     <div className="mx-auto max-w-3xl px-4 py-6 text-sm text-slate-700 sm:py-8">
@@ -164,17 +172,14 @@ export default function MethodologyView() {
 
       {/* Caveats */}
       <Section title="What the model doesn&apos;t capture">
-        <ul className="list-outside space-y-1.5 pl-5 text-slate-500 leading-relaxed marker:text-slate-400">
-          <li>Full lineup context beyond the confirmed top three hitters</li>
-          <li>Bullpen usage or opener strategies</li>
-          <li>In-game factors like pitch count, injury, or weather changes mid-game</li>
-          <li>Umpire tendencies or day/night splits</li>
-          <li>Early-season data is stabilized, but still noisier than midseason</li>
+        <ul className="space-y-2 text-slate-500 leading-relaxed">
+          {caveats.map(caveat => (
+            <li key={caveat} className="flex items-start gap-3">
+              <span aria-hidden="true" className="mt-[0.55rem] block size-1.5 shrink-0 rounded-full bg-slate-400" />
+              <span>{caveat}</span>
+            </li>
+          ))}
         </ul>
-        <p className="mt-3 text-slate-500 text-xs leading-relaxed">
-          A value screen, not a guarantee.
-          Check lineup news before betting.
-        </p>
       </Section>
 
       {/* Sources */}
