@@ -64,10 +64,10 @@ export async function GET(req: NextRequest) {
     // Fetch pitcher stats and team OBP in parallel (batch)
     const pitcherIds = [
       ...new Set(
-        games.flatMap(g => [
-          g.teams.home.probablePitcher?.id,
-          g.teams.away.probablePitcher?.id,
-        ].filter((id): id is number => id !== undefined)
+        games.flatMap(g => {
+          const ids = [g.teams.home.probablePitcher?.id, g.teams.away.probablePitcher?.id]
+          return ids.filter((id): id is number => id !== undefined)
+        })
       )
     ]
     const teamIds = [...new Set(games.flatMap(g => [g.teams.home.team.id, g.teams.away.team.id]))]
