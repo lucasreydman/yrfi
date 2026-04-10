@@ -46,7 +46,7 @@ function MobileCard({ game }: { game: GameResult }) {
   const awayTeam = getTeamDisplayName(game.awayTeam)
   const homeTeam = getTeamDisplayName(game.homeTeam)
   const pct = `${estimated ? '~' : ''}${(game.yrfiProbability * 100).toFixed(1)}%`
-  const odds = formatOddsDisplay(game.breakEvenOdds, estimated, settings.oddsFormat)
+  const odds = estimated ? '—' : formatOddsDisplay(game.breakEvenOdds, estimated, settings.oddsFormat)
   const time = new Date(game.gameTime).toLocaleTimeString([], {
     hour: 'numeric',
     minute: '2-digit',
@@ -80,7 +80,7 @@ function MobileCard({ game }: { game: GameResult }) {
       </div>
       <div className="mt-1 flex items-center justify-between text-sm text-slate-500">
         <span>{game.awayPitcher.name} vs {game.homePitcher.name}</span>
-        <span className="font-medium text-slate-700">{odds}</span>
+        <span className={estimated ? 'text-slate-300' : 'font-medium text-slate-700'}>{odds}</span>
       </div>
       <div className="mt-0.5 flex items-center gap-2 text-xs text-slate-400">
         <span>{time}</span>

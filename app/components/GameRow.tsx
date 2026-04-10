@@ -73,7 +73,7 @@ export default function GameRow({ game }: GameRowProps) {
   const awayTeam = getTeamDisplayName(game.awayTeam)
   const homeTeam = getTeamDisplayName(game.homeTeam)
   const pct = formatPct(game.yrfiProbability, estimated)
-  const odds = formatOddsDisplay(game.breakEvenOdds, estimated, settings.oddsFormat)
+  const odds = estimated ? '—' : formatOddsDisplay(game.breakEvenOdds, estimated, settings.oddsFormat)
   const temp = formatTemp(game.weather, settings.tempUnit)
   const wind = formatWind(game.weather, settings.windUnit)
   const time = formatTime(game.gameTime, resolveTimezone(settings.timezone))
@@ -102,7 +102,7 @@ export default function GameRow({ game }: GameRowProps) {
         {pct}
       </td>
       {/* Bet at */}
-      <td className="px-4 py-3 align-middle whitespace-nowrap text-sm font-medium text-slate-700 tabular-nums">{odds}</td>
+      <td className={`px-4 py-3 align-middle whitespace-nowrap text-sm tabular-nums ${estimated ? 'text-slate-300' : 'font-medium text-slate-700'}`}>{odds}</td>
       {/* Temp */}
       <td className="px-3 py-3 align-middle whitespace-nowrap text-center text-sm text-slate-500">{temp}</td>
       {/* Wind */}

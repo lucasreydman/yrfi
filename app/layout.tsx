@@ -6,7 +6,7 @@ import { SITE_NAME, getSiteUrl } from '@/lib/site'
 const geist = Geist({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-  title: `${SITE_NAME} — MLB YRFI Betting Model`,
+  title: 'MLB YRFI Betting Model',
   description: 'Find the minimum odds you need to bet YRFI with a statistical edge. Model-driven, updated daily.',
   icons: {
     icon: [
@@ -16,7 +16,7 @@ export const metadata: Metadata = {
     apple: '/yrfi-ballmark.svg',
   },
   openGraph: {
-    title: `${SITE_NAME} — MLB YRFI Betting Model`,
+    title: 'MLB YRFI Betting Model',
     description: 'Find the minimum odds you need to bet YRFI with a statistical edge. Model-driven, updated daily.',
     url: getSiteUrl(),
     siteName: SITE_NAME,
