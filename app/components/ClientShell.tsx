@@ -57,8 +57,8 @@ export default function ClientShell() {
   }, [])
 
   const upcoming = data?.games.filter(g => g.gameStatus === 'upcoming') ?? []
-  const inProgress = data?.games.filter(g => g.gameStatus === 'inProgress') ?? []
-  const settled = data?.games.filter(g => g.gameStatus === 'settled') ?? []
+  const inProgress = data?.games.filter(g => g.gameStatus === 'inProgress' && g.firstInningResult === 'pending') ?? []
+  const settled = data?.games.filter(g => g.gameStatus === 'settled' || (g.gameStatus === 'inProgress' && g.firstInningResult !== 'pending')) ?? []
 
   return (
     <div className="mx-auto max-w-7xl">
