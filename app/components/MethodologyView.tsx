@@ -4,7 +4,8 @@ import { BlockMath, InlineMath } from 'react-katex'
 
 const lambdaMath = String.raw`\begin{aligned}
 \lambda &= 0.36 \times A_{\text{bounded}} \\
-A_{\text{raw}} &= F_{\text{FIP}} \times F_{K} \times F_{\text{barrel}} \times F_{\text{OBP}} \times F_{\text{top3}} \times F_{\text{park}} \times F_{\text{weather}} \\
+A_{\text{raw}} &= F_{\text{FIP}} \times F_{K} \times F_{\text{barrel}} \times F_{\text{OBP}} \\
+&\quad \times F_{\text{top3}} \times F_{\text{park}} \times F_{\text{weather}} \\
 A_{\text{bounded}} &= \operatorname{clamp}(A_{\text{raw}}, 0.55, 1.55)
 \end{aligned}`
 
@@ -30,48 +31,70 @@ const factorRows = [
   {
     name: 'FIP factor',
     formula: String.raw`\left(\dfrac{\text{shrunk FIP}}{3.80}\right)^{0.55}`,
+    mobileFormula: String.raw`\left(\dfrac{\text{shrunk FIP}}{3.80}\right)^{0.55}`,
     description: 'FIP is the main pitcher input, but it is first shrunk toward league average when innings are limited and then damped so it cannot dominate the whole model by itself.',
     source: 'MLB Stats API',
   },
   {
     name: 'K% factor',
     formula: String.raw`\operatorname{clamp}\!\left(1 + 0.3\,\dfrac{0.23 - \text{shrunk }K\%}{0.23},\ 0.85,\ 1.15\right)`,
+    mobileFormula: String.raw`\begin{aligned}
+\operatorname{clamp}\!\left(&1 + 0.3\,\dfrac{0.23 - \text{shrunk }K\%}{0.23},\\
+&0.85,\ 1.15\right)
+\end{aligned}`,
     description: 'Strikeout rate is shrunk toward league average by batters faced, then clamped so a single extreme K% cannot swing the estimate by more than ±15%.',
     source: 'MLB Stats API',
   },
   {
     name: 'Barrel factor',
     formula: String.raw`\left(\dfrac{\text{shrunk barrel rate}}{8.0\%}\right)^{0.35}`,
+    mobileFormula: String.raw`\left(\dfrac{\text{shrunk barrel rate}}{8.0\%}\right)^{0.35}`,
     description: 'Barrel rate captures contact quality, but it overlaps with FIP, so it is shrunk by innings pitched and applied as a softer secondary adjustment.',
     source: 'Baseball Savant',
   },
   {
     name: 'OBP factor',
     formula: String.raw`\left(\dfrac{\text{shrunk team OBP}}{0.310}\right)^{0.70}`,
+    mobileFormula: String.raw`\left(\dfrac{\text{shrunk team OBP}}{0.310}\right)^{0.70}`,
     description: 'Season team OBP still anchors baseline offense, and the stabilization sample is heavier in April and May so tiny samples do not move the model too aggressively.',
     source: 'MLB Stats API',
   },
   {
     name: 'Top-3 lineup factor',
     formula: String.raw`\left(\operatorname{clamp}\!\left(\dfrac{\text{shrunk top-3 OBP}}{\text{team OBP}},\ 0.90,\ 1.12\right)\right)^{0.45}`,
+    mobileFormula: String.raw`\begin{aligned}
+\left(\operatorname{clamp}\!\left(&\dfrac{\text{shrunk top-3 OBP}}{\text{team OBP}},\\
+&0.90,\ 1.12\right)\right)^{0.45}
+\end{aligned}`,
     description: 'When a confirmed lineup is available, the first three hitters add a modest relative adjustment on top of the team baseline. If no confirmed order is posted, this factor stays neutral.',
     source: 'MLB Stats API',
   },
   {
     name: 'Park factor',
     formula: String.raw`\left(\text{park factor}\right)^{0.50}`,
+    mobileFormula: String.raw`\left(\text{park factor}\right)^{0.50}`,
     description: 'Park context still matters, but it is damped rather than fully multiplied so the venue informs the number without dictating it.',
     source: 'FanGraphs',
   },
   {
     name: 'Temp factor',
     formula: String.raw`T<55^\circ\!F\to0.92,\ T>80^\circ\!F\to1.06,\ \text{else }1.00`,
+    mobileFormula: String.raw`\begin{aligned}
+T<55^\circ\!F&\to0.92\\
+T>80^\circ\!F&\to1.06\\
+  &\mathrm{else}\to1.00
+\end{aligned}`,
     description: 'Cold air suppresses carry and hot air helps it slightly. Fixed-roof and retractable-roof parks are treated as neutral to avoid fake weather edge when roof state is unknown.',
     source: 'Open-Meteo',
   },
   {
     name: 'Wind factor',
     formula: String.raw`\ge10\ \mathrm{mph}:\ \text{in}\to0.93,\ \text{out}\to1.08,\ \text{cross}\to1.00`,
+    mobileFormula: String.raw`\begin{aligned}
+\ge10\ \mathrm{mph}:\ &\text{in}\to0.93\\
+&\text{out}\to1.08\\
+&\text{cross}\to1.00
+\end{aligned}`,
     description: 'Wind direction is resolved relative to each park\'s outfield orientation, then the total weather effect is damped so one forecast input cannot create an unrealistic number.',
     source: 'Open-Meteo',
   },
@@ -239,7 +262,7 @@ function Mono({ children }: { children: React.ReactNode }) {
 }
 
 function FactorTable({ factors }: {
-  factors: ReadonlyArray<{ name: string; formula: string; description: string; source: string }>
+  factors: ReadonlyArray<{ name: string; formula: string; mobileFormula?: string; description: string; source: string }>
 }) {
   return (
     <>
@@ -247,8 +270,8 @@ function FactorTable({ factors }: {
         {factors.map(f => (
           <article key={f.name} className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm shadow-slate-200/40">
             <div className="text-sm font-semibold text-slate-800">{f.name}</div>
-            <div className="methodology-inline-formula mt-2 overflow-hidden rounded-lg bg-slate-50 px-3 py-2 text-slate-700">
-              <InlineMath math={f.formula} />
+            <div className="methodology-card-formula mt-2 overflow-hidden rounded-lg bg-slate-50 px-2 py-2 text-slate-700">
+              <BlockMath math={f.mobileFormula ?? f.formula} />
             </div>
             <p className="mt-3 text-xs leading-relaxed text-slate-500">{f.description}</p>
             <div className="mt-3 text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-slate-400">{f.source}</div>

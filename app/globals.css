@@ -39,19 +39,34 @@ html {
     white-space: normal;
   }
 
+  .methodology-card-formula .katex-display {
+    margin: 0;
+    text-align: center;
+  }
+
+  .methodology-card-formula .katex {
+    font-size: 0.76rem;
+    line-height: 1.15;
+  }
+
   @media (max-width: 640px) {
     .methodology-formula {
       padding-inline: 0.9rem;
     }
 
     .methodology-formula .katex {
-      font-size: 0.7rem;
-      line-height: 1.25;
+      font-size: 0.6rem;
+      line-height: 1.15;
     }
 
     .methodology-inline-formula .katex {
-      font-size: 0.68rem;
-      line-height: 1.2;
+      font-size: 0.62rem;
+      line-height: 1.1;
+    }
+
+    .methodology-card-formula .katex {
+      font-size: 0.54rem;
+      line-height: 1.05;
     }
   }
 }
