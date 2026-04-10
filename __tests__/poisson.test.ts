@@ -1,9 +1,11 @@
 import {
   BASE_LAMBDA,
+  dateAdjustedStabilizationSample,
   computeLambda,
   computeYrfiProbability,
   breakEvenOdds,
   formatOdds,
+  stabilizationMultiplierForDate,
   shrinkTowardAverage,
   tempFactor,
   windFactor,
@@ -92,6 +94,16 @@ describe('computeLambda', () => {
     expect(result).toBeLessThan(0.45)
   })
 
+  it('boosts lambda when the confirmed top of the order is stronger than the team baseline', () => {
+    const result = computeLambda({ ...avgInputs, topOfOrderOBP: 0.360 })
+    expect(result).toBeGreaterThan(BASE_LAMBDA)
+  })
+
+  it('reduces lambda when the confirmed top of the order is weaker than the team baseline', () => {
+    const result = computeLambda({ ...avgInputs, topOfOrderOBP: 0.285 })
+    expect(result).toBeLessThan(BASE_LAMBDA)
+  })
+
   it('clamps K% factor between 0.85 and 1.15', () => {
     // K% = 0 (extreme) — K% factor should be clamped to 1.15
     const highResult = computeLambda({ ...avgInputs, pitcherKPct: 0 })
@@ -112,6 +124,22 @@ describe('shrinkTowardAverage', () => {
     const shrunk = shrinkTowardAverage(0.400, 0.310, 50, 600)
     expect(shrunk).toBeGreaterThan(0.310)
     expect(shrunk).toBeLessThan(0.400)
+  })
+})
+
+describe('dateAdjustedStabilizationSample', () => {
+  it('increases stabilization pressure in April', () => {
+    expect(stabilizationMultiplierForDate('2026-04-10')).toBeGreaterThan(1)
+    expect(dateAdjustedStabilizationSample(100, '2026-04-10')).toBeGreaterThan(100)
+  })
+
+  it('returns the base sample once the season is established', () => {
+    expect(stabilizationMultiplierForDate('2026-07-15')).toBe(1)
+    expect(dateAdjustedStabilizationSample(100, '2026-07-15')).toBe(100)
+  })
+
+  it('falls back safely for invalid dates', () => {
+    expect(stabilizationMultiplierForDate('not-a-date')).toBe(1)
   })
 })
 

@@ -1,4 +1,6 @@
 import {
+  TOP_OF_ORDER_OBP_STABILIZATION_PA,
+  dateAdjustedStabilizationSample,
   FIP_CONSTANT,
   LEAGUE_AVG_FIP,
   LEAGUE_AVG_K_PCT,
@@ -76,6 +78,44 @@ export interface TeamOffenseStats {
   usedFallback: boolean
 }
 
+export interface TeamLineupStats {
+  topOfOrderOBP: number | null
+  batterCount: number
+  confirmed: boolean
+}
+
+export interface GameLineupStats {
+  home: TeamLineupStats
+  away: TeamLineupStats
+}
+
+interface MlbPlayerBattingStats {
+  obp?: string
+  plateAppearances?: number
+}
+
+interface MlbGameFeedPlayer {
+  battingOrder?: string
+  seasonStats?: {
+    batting?: MlbPlayerBattingStats
+  }
+}
+
+interface MlbGameFeedTeam {
+  players?: Record<string, MlbGameFeedPlayer>
+}
+
+interface MlbGameFeedResponse {
+  liveData?: {
+    boxscore?: {
+      teams?: {
+        home?: MlbGameFeedTeam
+        away?: MlbGameFeedTeam
+      }
+    }
+  }
+}
+
 function parseIP(ip: string): number {
   const parts = ip.split('.')
   return parseInt(parts[0], 10) + (parseInt(parts[1] ?? '0', 10)) / 3
@@ -117,15 +157,17 @@ export async function fetchPitcherStatLine(
 
 export async function fetchPitcherFipAndKPct(
   playerId: number,
-  season: number
+  season: number,
+  date?: string,
 ): Promise<{ fip: number; kPct: number }> {
-  const stats = await fetchPitcherModelStats(playerId, season)
+  const stats = await fetchPitcherModelStats(playerId, season, date)
   return { fip: stats.fip, kPct: stats.kPct }
 }
 
 export async function fetchPitcherModelStats(
   playerId: number,
-  season: number
+  season: number,
+  date?: string,
 ): Promise<PitcherModelStats> {
   const stat = await fetchPitcherStatLine(playerId, season)
   if (!stat) {
@@ -142,10 +184,12 @@ export async function fetchPitcherModelStats(
   const battersFaced = stat.battersFaced ?? 0
   const rawFip = calcFip(stat)
   const rawKPct = calcKPct(stat)
+  const fipStabilization = dateAdjustedStabilizationSample(PITCHER_FIP_STABILIZATION_IP, date)
+  const kStabilization = dateAdjustedStabilizationSample(PITCHER_K_STABILIZATION_BF, date)
 
   return {
-    fip: shrinkTowardAverage(rawFip, LEAGUE_AVG_FIP, inningsPitched, PITCHER_FIP_STABILIZATION_IP),
-    kPct: shrinkTowardAverage(rawKPct, LEAGUE_AVG_K_PCT, battersFaced, PITCHER_K_STABILIZATION_BF),
+    fip: shrinkTowardAverage(rawFip, LEAGUE_AVG_FIP, inningsPitched, fipStabilization),
+    kPct: shrinkTowardAverage(rawKPct, LEAGUE_AVG_K_PCT, battersFaced, kStabilization),
     inningsPitched,
     battersFaced,
     usedFallback: false,
@@ -159,7 +203,7 @@ export async function fetchTeamOBP(teamId: number, season: number): Promise<numb
   return stats.obp
 }
 
-export async function fetchTeamOffenseStats(teamId: number, season: number): Promise<TeamOffenseStats> {
+export async function fetchTeamOffenseStats(teamId: number, season: number, date?: string): Promise<TeamOffenseStats> {
   const url = `${MLB_BASE}/teams/${teamId}/stats?stats=season&group=hitting&season=${season}`
   const res = await fetch(url, { next: { revalidate: 300 } })
   if (!res.ok) {
@@ -173,10 +217,70 @@ export async function fetchTeamOffenseStats(teamId: number, season: number): Pro
   }
 
   const plateAppearances = estimateTeamPlateAppearances(stat)
+  const stabilizationSample = dateAdjustedStabilizationSample(TEAM_OBP_STABILIZATION_PA, date)
   return {
-    obp: shrinkTowardAverage(parseFloat(stat.obp), LEAGUE_AVG_OBP, plateAppearances, TEAM_OBP_STABILIZATION_PA),
+    obp: shrinkTowardAverage(parseFloat(stat.obp), LEAGUE_AVG_OBP, plateAppearances, stabilizationSample),
     plateAppearances,
     usedFallback: false,
+  }
+}
+
+export function extractTopOfOrderStats(
+  players: Record<string, MlbGameFeedPlayer> | undefined,
+  date?: string,
+): TeamLineupStats {
+  if (!players) {
+    return { topOfOrderOBP: null, batterCount: 0, confirmed: false }
+  }
+
+  const orderedHitters = Object.values(players)
+    .filter(player => Boolean(player.battingOrder))
+    .sort((left, right) => parseInt(left.battingOrder ?? '0', 10) - parseInt(right.battingOrder ?? '0', 10))
+    .slice(0, 3)
+
+  if (orderedHitters.length < 3) {
+    return { topOfOrderOBP: null, batterCount: orderedHitters.length, confirmed: false }
+  }
+
+  const stabilizationSample = dateAdjustedStabilizationSample(TOP_OF_ORDER_OBP_STABILIZATION_PA, date)
+  const obps = orderedHitters
+    .map(player => {
+      const batting = player.seasonStats?.batting
+      const rawObp = parseFloat(batting?.obp ?? '')
+      const plateAppearances = batting?.plateAppearances ?? 0
+      if (!Number.isFinite(rawObp)) return null
+
+      return shrinkTowardAverage(rawObp, LEAGUE_AVG_OBP, plateAppearances, stabilizationSample)
+    })
+    .filter((value): value is number => value !== null)
+
+  if (obps.length < 3) {
+    return { topOfOrderOBP: null, batterCount: obps.length, confirmed: false }
+  }
+
+  return {
+    topOfOrderOBP: obps.reduce((sum, value) => sum + value, 0) / obps.length,
+    batterCount: obps.length,
+    confirmed: true,
+  }
+}
+
+export async function fetchGameLineupStats(gamePk: number, date?: string): Promise<GameLineupStats> {
+  const url = `${MLB_BASE}.1/game/${gamePk}/feed/live`
+  const res = await fetch(url, { cache: 'no-store' })
+  if (!res.ok) {
+    return {
+      home: { topOfOrderOBP: null, batterCount: 0, confirmed: false },
+      away: { topOfOrderOBP: null, batterCount: 0, confirmed: false },
+    }
+  }
+
+  const data: MlbGameFeedResponse = await res.json()
+  const teams = data.liveData?.boxscore?.teams
+
+  return {
+    home: extractTopOfOrderStats(teams?.home?.players, date),
+    away: extractTopOfOrderStats(teams?.away?.players, date),
   }
 }
 

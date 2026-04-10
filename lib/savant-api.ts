@@ -2,6 +2,7 @@ import Papa from 'papaparse'
 import type { SavantStats } from './types'
 import { kvGet, kvSet } from './kv'
 import {
+  dateAdjustedStabilizationSample,
   LEAGUE_AVG_BARREL_PCT,
   LEAGUE_AVG_HARD_HIT_PCT,
   SAVANT_STABILIZATION_IP,
@@ -46,7 +47,8 @@ export function parseSavantCsv(csv: string): SavantStore {
 
 export function getSavantStats(
   playerId: number,
-  store: SavantStore
+  store: SavantStore,
+  date?: string,
 ): Pick<SavantStats, 'barrelRate' | 'hardHitRate' | 'inningsPitched'> & { usedFallback: boolean } {
   const entry = store[String(playerId)]
   if (!entry) {
@@ -58,9 +60,11 @@ export function getSavantStats(
     }
   }
 
+  const stabilizationSample = dateAdjustedStabilizationSample(SAVANT_STABILIZATION_IP, date)
+
   return {
-    barrelRate: shrinkTowardAverage(entry.barrelRate, LEAGUE_AVG_BARREL_PCT, entry.inningsPitched, SAVANT_STABILIZATION_IP),
-    hardHitRate: shrinkTowardAverage(entry.hardHitRate, LEAGUE_AVG_HARD_HIT_PCT, entry.inningsPitched, SAVANT_STABILIZATION_IP),
+    barrelRate: shrinkTowardAverage(entry.barrelRate, LEAGUE_AVG_BARREL_PCT, entry.inningsPitched, stabilizationSample),
+    hardHitRate: shrinkTowardAverage(entry.hardHitRate, LEAGUE_AVG_HARD_HIT_PCT, entry.inningsPitched, stabilizationSample),
     inningsPitched: entry.inningsPitched,
     usedFallback: false,
   }

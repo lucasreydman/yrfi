@@ -24,7 +24,7 @@ No sportsbook integration — you compare the threshold against your own book an
 
 | Source | What it provides | Auth |
 |---|---|---|
-| MLB Stats API (`statsapi.mlb.com/api/v1`) | Schedule, starting pitchers, pitcher season stats (FIP components), team OBP, boxscore linescore | None |
+| MLB Stats API (`statsapi.mlb.com/api/v1`) | Schedule, starting pitchers, pitcher season stats (FIP components), team OBP, lineup order, boxscore linescore | None |
 | Baseball Savant (`baseballsavant.mlb.com`) | Pitcher barrel rate, hard-hit rate — season CSV, cached 12hr | None |
 | Open-Meteo (`api.open-meteo.com`) | Temperature, wind speed, wind direction per venue (forecast for upcoming games, archive for backtests) | None |
 
@@ -40,7 +40,7 @@ The model uses a **Poisson distribution** to estimate expected first-inning runs
 λ = 0.36 × bounded_adjustment_score
 ```
 
-The adjustment score is built from stabilized pitcher FIP, K%, Savant barrel rate, team OBP, park factor, and weather. Noisy early-season inputs are shrunk toward league average, correlated factors are damped, and the combined adjustment is bounded to keep the model in a realistic MLB range.
+The adjustment score is built from stabilized pitcher FIP, K%, Savant barrel rate, team OBP, confirmed top-of-order OBP, park factor, and weather. Noisy early-season inputs use a larger stabilization sample that tapers linearly from `1.75x` on March 15 to `1.00x` by July 1, correlated factors are damped, and the combined adjustment is bounded to keep the model in a realistic MLB range.
 
 **P(YRFI)** = 1 − P(home scores 0) × P(away scores 0) = 1 − e^(−λ_home) × e^(−λ_away)
 
@@ -117,6 +117,7 @@ npx vercel --prod # Deploy to production
 - **Result column:** Upcoming shows `—`, in-progress first innings show `IP`, scoring first innings show `RUN`, and scoreless first innings show `NO RUN`
 - **Desktop table alignment:** Temp, Wind, Time, and Result use centered fixed-width columns for uniform spacing
 - **TBD or missing pitcher data:** Model falls back to league-average inputs; values prefixed with `~`
+- **Lineup-aware boost:** If a confirmed batting order is posted, the model compares the top three hitters against the team baseline and nudges the YRFI number accordingly
 - **Roofed/retractable parks:** Weather is neutralized and the UI shows `Roof`
 - **Weather failure:** Factors default to 1.0; weather column shows `—`
 - **Preferences:** Temperature unit, wind unit, odds format, timezone — persisted in localStorage

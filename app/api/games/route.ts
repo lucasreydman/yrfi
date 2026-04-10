@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { kvGet, kvSet } from '@/lib/kv'
 import { fetchSchedule } from '@/lib/mlb-api'
-import { fetchPitcherModelStats, fetchTeamOffenseStats, fetchLinescore } from '@/lib/mlb-api'
+import { fetchGameLineupStats, fetchPitcherModelStats, fetchTeamOffenseStats, fetchLinescore } from '@/lib/mlb-api'
 import { loadSavantStore, getSavantStats } from '@/lib/savant-api'
 import { fetchWeather, getOutfieldFacingDegrees } from '@/lib/weather-api'
 import { getParkFactor } from '@/lib/park-factors'
@@ -35,11 +35,14 @@ function seasonForDate(date: string): number {
 
 export async function GET(req: NextRequest) {
   const date = req.nextUrl.searchParams.get('date') ?? getPacificDate()
+  const forceRefresh = req.nextUrl.searchParams.get('force') === '1'
 
   // KV cache check
   const cacheKey = `games-response:${RESPONSE_CACHE_VERSION}:${date}`
-  const cached = await kvGet<GamesResponse>(cacheKey)
-  if (cached) return NextResponse.json(cached)
+  if (!forceRefresh) {
+    const cached = await kvGet<GamesResponse>(cacheKey)
+    if (cached) return NextResponse.json(cached)
+  }
 
   try {
     const season = seasonForDate(date)
@@ -76,13 +79,15 @@ export async function GET(req: NextRequest) {
     ]
     const teamIds = [...new Set(games.flatMap(g => [g.teams.home.team.id, g.teams.away.team.id]))]
 
-    const [pitcherStats, teamOBPs] = await Promise.all([
-      Promise.all(pitcherIds.map(async id => ({ id, stats: await fetchPitcherModelStats(id, season) }))),
-      Promise.all(teamIds.map(async id => ({ id, stats: await fetchTeamOffenseStats(id, season) }))),
+    const [pitcherStats, teamOBPs, lineupStats] = await Promise.all([
+      Promise.all(pitcherIds.map(async id => ({ id, stats: await fetchPitcherModelStats(id, season, date) }))),
+      Promise.all(teamIds.map(async id => ({ id, stats: await fetchTeamOffenseStats(id, season, date) }))),
+      Promise.all(games.map(async game => ({ gamePk: game.gamePk, stats: await fetchGameLineupStats(game.gamePk, date) }))),
     ])
 
     const pitcherStatsMap = new Map(pitcherStats.map(p => [p.id, p.stats]))
     const teamOBPMap = new Map(teamOBPs.map(t => [t.id, t.stats]))
+    const lineupStatsMap = new Map(lineupStats.map(entry => [entry.gamePk, entry.stats]))
 
     // Build results
     const results: GameResult[] = await Promise.all(
@@ -118,7 +123,7 @@ export async function GET(req: NextRequest) {
             battersFaced: 0,
             usedFallback: true,
           }
-          const savant = getSavantStats(pitcher.id, savantStore)
+          const savant = getSavantStats(pitcher.id, savantStore, date)
           return {
             playerId: pitcher.id, name: pitcher.fullName,
             fip: stats.fip, kPct: stats.kPct,
@@ -142,6 +147,9 @@ export async function GET(req: NextRequest) {
         }
         const homeOBP = homeOffense.obp
         const awayOBP = awayOffense.obp
+        const lineupStats = lineupStatsMap.get(game.gamePk)
+        const homeTopOfOrderOBP = lineupStats?.home.topOfOrderOBP ?? null
+        const awayTopOfOrderOBP = lineupStats?.away.topOfOrderOBP ?? null
 
         const sharedEnv = {
           parkFactor,
@@ -157,6 +165,7 @@ export async function GET(req: NextRequest) {
           pitcherKPct: awayPitcher.kPct,
           pitcherBarrelRate: awayPitcher.barrelRate,
           teamOBP: homeOBP,
+          topOfOrderOBP: homeTopOfOrderOBP ?? undefined,
           ...sharedEnv,
         })
 
@@ -166,6 +175,7 @@ export async function GET(req: NextRequest) {
           pitcherKPct: homePitcher.kPct,
           pitcherBarrelRate: homePitcher.barrelRate,
           teamOBP: awayOBP,
+          topOfOrderOBP: awayTopOfOrderOBP ?? undefined,
           ...sharedEnv,
         })
 

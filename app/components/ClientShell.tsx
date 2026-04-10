@@ -25,12 +25,17 @@ export default function ClientShell() {
   const [error, setError] = useState<string | null>(null)
   const [, setTick] = useState(0) // for 60s re-render timer
 
-  const fetchData = useCallback(async (d: string, silent = false) => {
+  const fetchData = useCallback(async (d: string, silent = false, force = false) => {
     if (!silent) setLoading(true)
     else setRefreshing(true)
     setError(null)
     try {
-      const res = await fetch(`/api/games?date=${d}`)
+      const search = new URLSearchParams({ date: d })
+      if (force) search.set('force', '1')
+
+      const res = await fetch(`/api/games?${search.toString()}`, {
+        cache: force ? 'no-store' : 'default',
+      })
       if (!res.ok) {
         const err = await res.json()
         throw new Error(err.error ?? 'Failed to load')
@@ -115,7 +120,7 @@ export default function ClientShell() {
             <StatusBar
               generatedAt={data.generatedAt}
               gameCount={data.games.length}
-              onRefresh={() => fetchData(date, true)}
+              onRefresh={() => fetchData(date, true, true)}
               refreshing={refreshing}
             />
           )}

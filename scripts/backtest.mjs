@@ -1,3 +1,5 @@
+import { mkdir, readFile, writeFile } from 'node:fs/promises'
+import path from 'node:path'
 import Papa from 'papaparse'
 
 const LEAGUE_AVG_FIP = 3.8
@@ -10,15 +12,18 @@ const PITCHER_FIP_STABILIZATION_IP = 45
 const PITCHER_K_STABILIZATION_BF = 150
 const TEAM_OBP_STABILIZATION_PA = 600
 const SAVANT_STABILIZATION_IP = 50
+const TOP_OF_ORDER_OBP_STABILIZATION_PA = 180
 const RESPONSE_DELAY_MS = 0
 
 const FIP_FACTOR_WEIGHT = 0.55
 const BARREL_FACTOR_WEIGHT = 0.35
 const OBP_FACTOR_WEIGHT = 0.7
+const TOP_OF_ORDER_FACTOR_WEIGHT = 0.45
 const PARK_FACTOR_WEIGHT = 0.5
 const WEATHER_FACTOR_WEIGHT = 0.5
 const MIN_ADJUSTMENT_FACTOR = 0.55
 const MAX_ADJUSTMENT_FACTOR = 1.55
+const BACKTEST_CACHE_VERSION = 'v2'
 
 const PARK_FACTORS = {
   1: 0.97, 2: 0.97, 3: 1.02, 4: 0.96, 5: 0.97, 7: 1.0, 10: 0.97, 12: 0.96,
@@ -72,6 +77,53 @@ function shrinkTowardAverage(value, average, sampleSize, stabilizationSample) {
   return average + (value - average) * weight
 }
 
+function stabilizationMultiplierForDate(date) {
+  const parsed = new Date(`${date}T12:00:00Z`)
+  if (Number.isNaN(parsed.getTime())) return 1
+
+  const year = parsed.getUTCFullYear()
+  const openingWindowStart = Date.UTC(year, 2, 15)
+  const stabilizationFloorDate = Date.UTC(year, 6, 1)
+  const progress = clamp(
+    (parsed.getTime() - openingWindowStart) / (stabilizationFloorDate - openingWindowStart),
+    0,
+    1,
+  )
+
+  return 1.75 - 0.75 * progress
+}
+
+function informationStabilizationMultiplierForDate(date) {
+  const parsed = new Date(`${date}T12:00:00Z`)
+  if (Number.isNaN(parsed.getTime())) return 1
+
+  const year = parsed.getUTCFullYear()
+  const openingWindowStart = Date.UTC(year, 2, 15)
+  const stabilizationFloorDate = Date.UTC(year, 6, 1)
+  const progress = clamp(
+    (parsed.getTime() - openingWindowStart) / (stabilizationFloorDate - openingWindowStart),
+    0,
+    1,
+  )
+
+  const effectiveInformation = 0.23 + 0.77 * progress
+  return clamp(1 / Math.sqrt(effectiveInformation), 1, 1.85)
+}
+
+function dateAdjustedStabilizationSample(baseSample, date) {
+  if (!date) return baseSample
+  return baseSample * stabilizationMultiplierForDate(date)
+}
+
+function informationDateAdjustedStabilizationSample(baseSample, date) {
+  if (!date) return baseSample
+  return baseSample * informationStabilizationMultiplierForDate(date)
+}
+
+function legacyStabilizationSample(baseSample) {
+  return baseSample
+}
+
 function parseIp(ip) {
   const [whole, partial = '0'] = String(ip).split('.')
   return Number.parseInt(whole, 10) + Number.parseInt(partial, 10) / 3
@@ -92,7 +144,27 @@ function windFactor(windSpeedMph, windFromDegrees, outfieldFacingDegrees) {
   return 1.0
 }
 
-function computeLambda({ pitcherFip, pitcherKPct, pitcherBarrelRate, teamOBP, parkFactor, tempF, windSpeedMph, windFromDegrees, outfieldFacingDegrees }) {
+function computeLambda({ pitcherFip, pitcherKPct, pitcherBarrelRate, teamOBP, topOfOrderOBP, parkFactor, tempF, windSpeedMph, windFromDegrees, outfieldFacingDegrees }) {
+  const fipFactor = Math.pow(pitcherFip / LEAGUE_AVG_FIP, FIP_FACTOR_WEIGHT)
+  const rawKFactor = 1 + 0.3 * (LEAGUE_AVG_K_PCT - pitcherKPct) / LEAGUE_AVG_K_PCT
+  const kFactor = clamp(rawKFactor, 0.85, 1.15)
+  const barrelFactor = Math.pow(pitcherBarrelRate / LEAGUE_AVG_BARREL_PCT, BARREL_FACTOR_WEIGHT)
+  const obpFactor = Math.pow(teamOBP / LEAGUE_AVG_OBP, OBP_FACTOR_WEIGHT)
+  const topOfOrderRatio = topOfOrderOBP && teamOBP > 0
+    ? clamp(topOfOrderOBP / teamOBP, 0.9, 1.12)
+    : 1
+  const topOfOrderFactor = Math.pow(topOfOrderRatio, TOP_OF_ORDER_FACTOR_WEIGHT)
+  const parkAdjustment = Math.pow(parkFactor, PARK_FACTOR_WEIGHT)
+  const weatherAdjustment = Math.pow(tempFactor(tempF) * windFactor(windSpeedMph, windFromDegrees, outfieldFacingDegrees), WEATHER_FACTOR_WEIGHT)
+  const combinedAdjustment = clamp(
+    fipFactor * kFactor * barrelFactor * obpFactor * topOfOrderFactor * parkAdjustment * weatherAdjustment,
+    MIN_ADJUSTMENT_FACTOR,
+    MAX_ADJUSTMENT_FACTOR,
+  )
+  return BASE_LAMBDA * combinedAdjustment
+}
+
+function computeLambdaLegacy({ pitcherFip, pitcherKPct, pitcherBarrelRate, teamOBP, parkFactor, tempF, windSpeedMph, windFromDegrees, outfieldFacingDegrees }) {
   const fipFactor = Math.pow(pitcherFip / LEAGUE_AVG_FIP, FIP_FACTOR_WEIGHT)
   const rawKFactor = 1 + 0.3 * (LEAGUE_AVG_K_PCT - pitcherKPct) / LEAGUE_AVG_K_PCT
   const kFactor = clamp(rawKFactor, 0.85, 1.15)
@@ -106,6 +178,12 @@ function computeLambda({ pitcherFip, pitcherKPct, pitcherBarrelRate, teamOBP, pa
     MAX_ADJUSTMENT_FACTOR,
   )
   return BASE_LAMBDA * combinedAdjustment
+}
+
+function getStabilizationSample(baseSample, date, taperMode) {
+  if (taperMode === 'legacy') return legacyStabilizationSample(baseSample)
+  if (taperMode === 'info') return informationDateAdjustedStabilizationSample(baseSample, date)
+  return dateAdjustedStabilizationSample(baseSample, date)
 }
 
 function computeYrfiProbability(lambdaHome, lambdaAway) {
@@ -146,7 +224,9 @@ async function fetchText(url) {
 async function fetchSchedule(date) {
   const url = `https://statsapi.mlb.com/api/v1/schedule?sportId=1&date=${date}&hydrate=probablePitcher,lineups`
   const data = await fetchJson(url)
-  return (data.dates?.[0]?.games ?? []).filter(game => !['Postponed', 'Cancelled', 'Suspended'].includes(game.status.detailedState))
+  return (data.dates?.[0]?.games ?? []).filter(
+    game => game.gameType === 'R' && !['Postponed', 'Cancelled', 'Suspended'].includes(game.status.detailedState)
+  )
 }
 
 async function loadSavantStore(year) {
@@ -165,18 +245,19 @@ async function loadSavantStore(year) {
   return store
 }
 
-function getSavantStats(playerId, store) {
+function getSavantStats(playerId, store, date, taperMode = 'info') {
   const entry = store.get(playerId)
   if (!entry) {
     return { barrelRate: LEAGUE_AVG_BARREL_PCT, hardHitRate: 38.0 }
   }
+  const stabilizationSample = getStabilizationSample(SAVANT_STABILIZATION_IP, date, taperMode)
   return {
-    barrelRate: shrinkTowardAverage(entry.barrelRate, LEAGUE_AVG_BARREL_PCT, entry.inningsPitched, SAVANT_STABILIZATION_IP),
-    hardHitRate: shrinkTowardAverage(entry.hardHitRate, 38.0, entry.inningsPitched, SAVANT_STABILIZATION_IP),
+    barrelRate: shrinkTowardAverage(entry.barrelRate, LEAGUE_AVG_BARREL_PCT, entry.inningsPitched, stabilizationSample),
+    hardHitRate: shrinkTowardAverage(entry.hardHitRate, 38.0, entry.inningsPitched, stabilizationSample),
   }
 }
 
-async function fetchPitcherStats(playerId, season) {
+async function fetchPitcherStats(playerId, season, date, taperMode = 'info') {
   const url = `https://statsapi.mlb.com/api/v1/people/${playerId}/stats?stats=season&group=pitching&season=${season}`
   const data = await fetchJson(url)
   const stat = data.stats?.[0]?.splits?.[0]?.stat
@@ -187,20 +268,75 @@ async function fetchPitcherStats(playerId, season) {
     ? LEAGUE_AVG_FIP
     : (13 * stat.homeRuns + 3 * (stat.baseOnBalls + stat.hitByPitch) - 2 * stat.strikeOuts) / inningsPitched + FIP_CONSTANT
   const rawKPct = battersFaced === 0 ? LEAGUE_AVG_K_PCT : stat.strikeOuts / battersFaced
+  const fipStabilization = getStabilizationSample(PITCHER_FIP_STABILIZATION_IP, date, taperMode)
+  const kStabilization = getStabilizationSample(PITCHER_K_STABILIZATION_BF, date, taperMode)
   return {
-    fip: shrinkTowardAverage(rawFip, LEAGUE_AVG_FIP, inningsPitched, PITCHER_FIP_STABILIZATION_IP),
-    kPct: shrinkTowardAverage(rawKPct, LEAGUE_AVG_K_PCT, battersFaced, PITCHER_K_STABILIZATION_BF),
+    fip: shrinkTowardAverage(rawFip, LEAGUE_AVG_FIP, inningsPitched, fipStabilization),
+    kPct: shrinkTowardAverage(rawKPct, LEAGUE_AVG_K_PCT, battersFaced, kStabilization),
     usedFallback: false,
   }
 }
 
-async function fetchTeamObp(teamId, season) {
+async function fetchTeamObp(teamId, season, date, taperMode = 'info') {
   const url = `https://statsapi.mlb.com/api/v1/teams/${teamId}/stats?stats=season&group=hitting&season=${season}`
-  const data = await fetchJson(url)
+  let data
+  try {
+    data = await fetchJson(url)
+  } catch {
+    return LEAGUE_AVG_OBP
+  }
   const stat = data.stats?.[0]?.splits?.[0]?.stat
   if (!stat?.obp) return LEAGUE_AVG_OBP
   const plateAppearances = stat.plateAppearances ?? ((stat.atBats ?? 0) + (stat.baseOnBalls ?? 0) + (stat.hitByPitch ?? 0) + (stat.sacrificeFlies ?? 0))
-  return shrinkTowardAverage(Number.parseFloat(stat.obp), LEAGUE_AVG_OBP, plateAppearances, TEAM_OBP_STABILIZATION_PA)
+  const stabilizationSample = getStabilizationSample(TEAM_OBP_STABILIZATION_PA, date, taperMode)
+  return shrinkTowardAverage(Number.parseFloat(stat.obp), LEAGUE_AVG_OBP, plateAppearances, stabilizationSample)
+}
+
+function extractTopOfOrderObp(players, date, taperMode = 'info') {
+  if (!players) return null
+
+  const orderedHitters = Object.values(players)
+    .filter(player => Boolean(player.battingOrder))
+    .sort((left, right) => Number.parseInt(left.battingOrder ?? '0', 10) - Number.parseInt(right.battingOrder ?? '0', 10))
+    .slice(0, 3)
+
+  if (orderedHitters.length < 3) return null
+
+  const stabilizationSample = getStabilizationSample(TOP_OF_ORDER_OBP_STABILIZATION_PA, date, taperMode)
+  const obps = orderedHitters
+    .map(player => {
+      const batting = player.seasonStats?.batting
+      const rawObp = Number.parseFloat(batting?.obp ?? '')
+      const plateAppearances = batting?.plateAppearances ?? 0
+      if (!Number.isFinite(rawObp)) return null
+      return shrinkTowardAverage(rawObp, LEAGUE_AVG_OBP, plateAppearances, stabilizationSample)
+    })
+    .filter(value => value !== null)
+
+  if (obps.length < 3) return null
+  return obps.reduce((sum, value) => sum + value, 0) / obps.length
+}
+
+async function fetchLineupStats(gamePk, date, taperMode = 'info') {
+  const data = await fetchJson(`https://statsapi.mlb.com/api/v1.1/game/${gamePk}/feed/live`)
+  const teams = data.liveData?.boxscore?.teams
+  return {
+    home: extractTopOfOrderObp(teams?.home?.players, date, taperMode),
+    away: extractTopOfOrderObp(teams?.away?.players, date, taperMode),
+  }
+}
+
+function summarizePredictions(predictions) {
+  const avgPrediction = predictions.reduce((sum, row) => sum + row.prediction, 0) / predictions.length
+  const actualRate = predictions.reduce((sum, row) => sum + row.actual, 0) / predictions.length
+  const brierScore = predictions.reduce((sum, row) => sum + (row.prediction - row.actual) ** 2, 0) / predictions.length
+
+  return {
+    avgPrediction,
+    actualRate,
+    calibrationGap: avgPrediction - actualRate,
+    brierScore,
+  }
 }
 
 async function fetchWeather(venueId, gameTimeIso) {
@@ -263,6 +399,27 @@ function formatPct(value) {
   return `${(value * 100).toFixed(1)}%`
 }
 
+function buildCheckpointPath(cacheDir, date) {
+  return path.join(cacheDir, `${date}.json`)
+}
+
+async function ensureCacheDir(cacheDir) {
+  await mkdir(cacheDir, { recursive: true })
+}
+
+async function readCheckpoint(cacheDir, date) {
+  try {
+    const raw = await readFile(buildCheckpointPath(cacheDir, date), 'utf8')
+    return JSON.parse(raw)
+  } catch {
+    return null
+  }
+}
+
+async function writeCheckpoint(cacheDir, date, payload) {
+  await writeFile(buildCheckpointPath(cacheDir, date), JSON.stringify(payload), 'utf8')
+}
+
 async function mapWithConcurrency(items, limit, mapper) {
   const results = []
   let index = 0
@@ -281,10 +438,23 @@ async function mapWithConcurrency(items, limit, mapper) {
 }
 
 async function run() {
-  const [, , startArg, endArg] = process.argv
+  const args = process.argv.slice(2)
+  const compareMode = args.includes('--compare')
+  const compareTapersMode = args.includes('--compare-tapers')
+  const resumeMode = !args.includes('--no-resume')
+  const positionalArgs = args.filter(arg => arg !== '--compare')
+    .filter(arg => arg !== '--compare-tapers')
+    .filter(arg => arg !== '--no-resume')
+  const [startArg, endArg] = positionalArgs
   if (!startArg || !endArg) {
-    console.error('Usage: npm run backtest -- YYYY-MM-DD YYYY-MM-DD')
+    console.error('Usage: npm run backtest -- YYYY-MM-DD YYYY-MM-DD [--compare] [--compare-tapers] [--no-resume]')
     process.exit(1)
+  }
+
+  const runMode = compareTapersMode ? 'compare-tapers' : compareMode ? 'compare' : 'single'
+  const cacheDir = path.join(process.cwd(), '.backtest-cache', BACKTEST_CACHE_VERSION, `${startArg}_${endArg}_${runMode}`)
+  if (resumeMode) {
+    await ensureCacheDir(cacheDir)
   }
 
   const dates = dateRange(startArg, endArg)
@@ -292,16 +462,34 @@ async function run() {
   const pitcherCache = new Map()
   const teamCache = new Map()
   const weatherCache = new Map()
+  const lineupCache = new Map()
   const predictions = []
+  const legacyPredictions = []
+  const infoPredictions = []
 
   for (const date of dates) {
     console.log(`Backtesting ${date}...`)
+
+    if (resumeMode) {
+      const cached = await readCheckpoint(cacheDir, date)
+      if (cached) {
+        predictions.push(...(cached.predictions ?? []))
+        legacyPredictions.push(...(cached.legacyPredictions ?? []))
+        infoPredictions.push(...(cached.infoPredictions ?? []))
+        console.log(`Resumed ${date} from checkpoint.`)
+        continue
+      }
+    }
+
     const season = Number.parseInt(date.slice(0, 4), 10)
     if (!savantStores.has(season)) {
       savantStores.set(season, await loadSavantStore(season))
     }
     const savantStore = savantStores.get(season)
     const games = await fetchSchedule(date)
+    const datePredictions = []
+    const dateLegacyPredictions = []
+    const dateInfoPredictions = []
 
     await mapWithConcurrency(games, 4, async game => {
       const homePitcherId = game.teams.home.probablePitcher?.id
@@ -310,17 +498,41 @@ async function run() {
 
       const pitcherIds = [homePitcherId, awayPitcherId]
       for (const pitcherId of pitcherIds) {
-        const key = `${season}:${pitcherId}`
+        const key = `${season}:${pitcherId}:current`
         if (!pitcherCache.has(key)) {
-          pitcherCache.set(key, await fetchPitcherStats(pitcherId, season))
+          pitcherCache.set(key, await fetchPitcherStats(pitcherId, season, date, 'linear'))
+        }
+        if (compareMode) {
+          const legacyKey = `${season}:${pitcherId}:legacy`
+          if (!pitcherCache.has(legacyKey)) {
+            pitcherCache.set(legacyKey, await fetchPitcherStats(pitcherId, season, date, 'legacy'))
+          }
+        }
+        if (compareTapersMode) {
+          const infoKey = `${season}:${pitcherId}:info`
+          if (!pitcherCache.has(infoKey)) {
+            pitcherCache.set(infoKey, await fetchPitcherStats(pitcherId, season, date, 'info'))
+          }
         }
       }
 
       const teamIds = [game.teams.home.team.id, game.teams.away.team.id]
       for (const teamId of teamIds) {
-        const key = `${season}:${teamId}`
+        const key = `${season}:${teamId}:current`
         if (!teamCache.has(key)) {
-          teamCache.set(key, await fetchTeamObp(teamId, season))
+          teamCache.set(key, await fetchTeamObp(teamId, season, date, 'linear'))
+        }
+        if (compareMode) {
+          const legacyKey = `${season}:${teamId}:legacy`
+          if (!teamCache.has(legacyKey)) {
+            teamCache.set(legacyKey, await fetchTeamObp(teamId, season, date, 'legacy'))
+          }
+        }
+        if (compareTapersMode) {
+          const infoKey = `${season}:${teamId}:info`
+          if (!teamCache.has(infoKey)) {
+            teamCache.set(infoKey, await fetchTeamObp(teamId, season, date, 'info'))
+          }
         }
       }
 
@@ -328,19 +540,27 @@ async function run() {
       if (!weatherCache.has(weatherKey)) {
         weatherCache.set(weatherKey, await fetchWeather(game.venue.id, game.gameDate))
       }
+      if (!lineupCache.has(game.gamePk)) {
+        lineupCache.set(game.gamePk, {
+          linear: await fetchLineupStats(game.gamePk, date, 'linear'),
+          info: compareTapersMode ? await fetchLineupStats(game.gamePk, date, 'info') : null,
+        })
+      }
 
-      const homePitcher = pitcherCache.get(`${season}:${homePitcherId}`)
-      const awayPitcher = pitcherCache.get(`${season}:${awayPitcherId}`)
-      const homeObp = teamCache.get(`${season}:${game.teams.home.team.id}`)
-      const awayObp = teamCache.get(`${season}:${game.teams.away.team.id}`)
+      const homePitcher = pitcherCache.get(`${season}:${homePitcherId}:current`)
+      const awayPitcher = pitcherCache.get(`${season}:${awayPitcherId}:current`)
+      const homeObp = teamCache.get(`${season}:${game.teams.home.team.id}:current`)
+      const awayObp = teamCache.get(`${season}:${game.teams.away.team.id}:current`)
       const weather = weatherCache.get(weatherKey)
+      const lineup = lineupCache.get(game.gamePk)
       const stadium = STADIUMS[game.venue.id] ?? { outfieldFacingDegrees: 0 }
 
       const lambdaHome = computeLambda({
         pitcherFip: awayPitcher.fip,
         pitcherKPct: awayPitcher.kPct,
-        pitcherBarrelRate: getSavantStats(awayPitcherId, savantStore).barrelRate,
+        pitcherBarrelRate: getSavantStats(awayPitcherId, savantStore, date, 'linear').barrelRate,
         teamOBP: homeObp,
+        topOfOrderOBP: lineup?.linear?.home ?? undefined,
         parkFactor: getParkFactor(game.venue.id),
         tempF: weather.tempF,
         windSpeedMph: weather.windSpeedMph,
@@ -351,8 +571,9 @@ async function run() {
       const lambdaAway = computeLambda({
         pitcherFip: homePitcher.fip,
         pitcherKPct: homePitcher.kPct,
-        pitcherBarrelRate: getSavantStats(homePitcherId, savantStore).barrelRate,
+        pitcherBarrelRate: getSavantStats(homePitcherId, savantStore, date, 'linear').barrelRate,
         teamOBP: awayObp,
+        topOfOrderOBP: lineup?.linear?.away ?? undefined,
         parkFactor: getParkFactor(game.venue.id),
         tempF: weather.tempF,
         windSpeedMph: weather.windSpeedMph,
@@ -363,12 +584,102 @@ async function run() {
       const actual = getActualYrfi(await fetchLinescore(game.gamePk))
       if (actual === null) return
 
-      predictions.push({
+      const predictionRow = {
         date,
         prediction: computeYrfiProbability(lambdaHome, lambdaAway),
         actual,
-      })
+      }
+      predictions.push(predictionRow)
+      datePredictions.push(predictionRow)
+
+      if (compareMode) {
+        const legacyHomePitcher = pitcherCache.get(`${season}:${homePitcherId}:legacy`)
+        const legacyAwayPitcher = pitcherCache.get(`${season}:${awayPitcherId}:legacy`)
+        const legacyHomeObp = teamCache.get(`${season}:${game.teams.home.team.id}:legacy`)
+        const legacyAwayObp = teamCache.get(`${season}:${game.teams.away.team.id}:legacy`)
+
+        const legacyLambdaHome = computeLambdaLegacy({
+          pitcherFip: legacyAwayPitcher.fip,
+          pitcherKPct: legacyAwayPitcher.kPct,
+          pitcherBarrelRate: getSavantStats(awayPitcherId, savantStore, date, 'legacy').barrelRate,
+          teamOBP: legacyHomeObp,
+          parkFactor: getParkFactor(game.venue.id),
+          tempF: weather.tempF,
+          windSpeedMph: weather.windSpeedMph,
+          windFromDegrees: weather.windFromDegrees,
+          outfieldFacingDegrees: stadium.outfieldFacingDegrees,
+        })
+
+        const legacyLambdaAway = computeLambdaLegacy({
+          pitcherFip: legacyHomePitcher.fip,
+          pitcherKPct: legacyHomePitcher.kPct,
+          pitcherBarrelRate: getSavantStats(homePitcherId, savantStore, date, 'legacy').barrelRate,
+          teamOBP: legacyAwayObp,
+          parkFactor: getParkFactor(game.venue.id),
+          tempF: weather.tempF,
+          windSpeedMph: weather.windSpeedMph,
+          windFromDegrees: weather.windFromDegrees,
+          outfieldFacingDegrees: stadium.outfieldFacingDegrees,
+        })
+
+        const legacyPredictionRow = {
+          date,
+          prediction: computeYrfiProbability(legacyLambdaHome, legacyLambdaAway),
+          actual,
+        }
+        legacyPredictions.push(legacyPredictionRow)
+        dateLegacyPredictions.push(legacyPredictionRow)
+      }
+
+      if (compareTapersMode) {
+        const infoHomePitcher = pitcherCache.get(`${season}:${homePitcherId}:info`)
+        const infoAwayPitcher = pitcherCache.get(`${season}:${awayPitcherId}:info`)
+        const infoHomeObp = teamCache.get(`${season}:${game.teams.home.team.id}:info`)
+        const infoAwayObp = teamCache.get(`${season}:${game.teams.away.team.id}:info`)
+
+        const infoLambdaHome = computeLambda({
+          pitcherFip: infoAwayPitcher.fip,
+          pitcherKPct: infoAwayPitcher.kPct,
+          pitcherBarrelRate: getSavantStats(awayPitcherId, savantStore, date, 'info').barrelRate,
+          teamOBP: infoHomeObp,
+          topOfOrderOBP: lineup?.info?.home ?? undefined,
+          parkFactor: getParkFactor(game.venue.id),
+          tempF: weather.tempF,
+          windSpeedMph: weather.windSpeedMph,
+          windFromDegrees: weather.windFromDegrees,
+          outfieldFacingDegrees: stadium.outfieldFacingDegrees,
+        })
+
+        const infoLambdaAway = computeLambda({
+          pitcherFip: infoHomePitcher.fip,
+          pitcherKPct: infoHomePitcher.kPct,
+          pitcherBarrelRate: getSavantStats(homePitcherId, savantStore, date, 'info').barrelRate,
+          teamOBP: infoAwayObp,
+          topOfOrderOBP: lineup?.info?.away ?? undefined,
+          parkFactor: getParkFactor(game.venue.id),
+          tempF: weather.tempF,
+          windSpeedMph: weather.windSpeedMph,
+          windFromDegrees: weather.windFromDegrees,
+          outfieldFacingDegrees: stadium.outfieldFacingDegrees,
+        })
+
+        const infoPredictionRow = {
+          date,
+          prediction: computeYrfiProbability(infoLambdaHome, infoLambdaAway),
+          actual,
+        }
+        infoPredictions.push(infoPredictionRow)
+        dateInfoPredictions.push(infoPredictionRow)
+      }
     })
+
+    if (resumeMode) {
+      await writeCheckpoint(cacheDir, date, {
+        predictions: datePredictions,
+        legacyPredictions: dateLegacyPredictions,
+        infoPredictions: dateInfoPredictions,
+      })
+    }
   }
 
   if (predictions.length === 0) {
@@ -376,15 +687,13 @@ async function run() {
     process.exit(1)
   }
 
-  const avgPrediction = predictions.reduce((sum, row) => sum + row.prediction, 0) / predictions.length
-  const actualRate = predictions.reduce((sum, row) => sum + row.actual, 0) / predictions.length
-  const brierScore = predictions.reduce((sum, row) => sum + (row.prediction - row.actual) ** 2, 0) / predictions.length
+  const { avgPrediction, actualRate, calibrationGap, brierScore } = summarizePredictions(predictions)
 
   console.log('')
   console.log(`Games: ${predictions.length}`)
   console.log(`Average predicted YRFI: ${formatPct(avgPrediction)}`)
   console.log(`Actual YRFI rate:      ${formatPct(actualRate)}`)
-  console.log(`Calibration gap:       ${formatPct(avgPrediction - actualRate)}`)
+  console.log(`Calibration gap:       ${formatPct(calibrationGap)}`)
   console.log(`Brier score:           ${brierScore.toFixed(4)}`)
   console.log('')
 
@@ -400,6 +709,32 @@ async function run() {
     const predicted = rows.reduce((sum, row) => sum + row.prediction, 0) / rows.length
     const actual = rows.reduce((sum, row) => sum + row.actual, 0) / rows.length
     console.log(`  ${formatPct(bin.min)}-${formatPct(bin.max)}: n=${rows.length}, pred=${formatPct(predicted)}, actual=${formatPct(actual)}`)
+  }
+
+  if (compareMode && legacyPredictions.length > 0) {
+    const { avgPrediction: legacyAvgPrediction, actualRate: legacyActualRate, calibrationGap: legacyCalibrationGap, brierScore: legacyBrierScore } = summarizePredictions(legacyPredictions)
+
+    console.log('')
+    console.log('Legacy comparison:')
+    console.log(`Legacy average predicted YRFI: ${formatPct(legacyAvgPrediction)}`)
+    console.log(`Legacy actual YRFI rate:      ${formatPct(legacyActualRate)}`)
+    console.log(`Legacy calibration gap:       ${formatPct(legacyCalibrationGap)}`)
+    console.log(`Legacy Brier score:           ${legacyBrierScore.toFixed(4)}`)
+    console.log(`Brier delta (current-legacy): ${(brierScore - legacyBrierScore).toFixed(4)}`)
+    console.log(`Calibration delta:            ${formatPct(calibrationGap - legacyCalibrationGap)}`)
+  }
+
+  if (compareTapersMode && infoPredictions.length > 0) {
+    const { avgPrediction: infoAvgPrediction, actualRate: infoActualRate, calibrationGap: infoCalibrationGap, brierScore: infoBrierScore } = summarizePredictions(infoPredictions)
+
+    console.log('')
+    console.log('Information taper comparison:')
+    console.log(`Information average predicted YRFI: ${formatPct(infoAvgPrediction)}`)
+    console.log(`Information actual YRFI rate:      ${formatPct(infoActualRate)}`)
+    console.log(`Information calibration gap:       ${formatPct(infoCalibrationGap)}`)
+    console.log(`Information Brier score:           ${infoBrierScore.toFixed(4)}`)
+    console.log(`Brier delta (linear-info):         ${(brierScore - infoBrierScore).toFixed(4)}`)
+    console.log(`Calibration delta:                 ${formatPct(calibrationGap - infoCalibrationGap)}`)
   }
 }
 

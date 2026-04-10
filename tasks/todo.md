@@ -4,3 +4,8 @@
 - [x] Add backtest tooling and validation metrics
 - [x] Update tests and documentation
 - [x] Run lint, tests, and backtest smoke check
+
+- [x] Add date-aware early-season stabilization across noisy inputs
+- [x] Add lineup-aware top-of-order adjustment with graceful fallback
+- [x] Update methodology/docs/tests for the new model inputs
+- [x] Run targeted validation for model changes

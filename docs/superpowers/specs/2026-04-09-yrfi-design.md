@@ -136,9 +136,14 @@ Adjustments (stabilized and damped before being combined):
     Fixed-roof and retractable-roof parks are treated as weather-neutral (temp = 1.00, wind = 1.00)
     because roof state is not available reliably enough pregame to price weather edge honestly
 
-raw_adjustment = FIP_factor × K%_factor × barrel_factor × OBP_factor × park_factor × (temp_factor × wind_factor)^0.50
+top3_factor = clamp(shrunk_top3_obp / shrunk_team_obp, 0.90, 1.12)^0.45
+
+raw_adjustment = FIP_factor × K%_factor × barrel_factor × OBP_factor × top3_factor × park_factor × (temp_factor × wind_factor)^0.50
 bounded_adjustment = clamp(raw_adjustment, 0.55, 1.55)
 λ = base × bounded_adjustment
+
+stabilization_multiplier(date) = 1.75 - 0.75 × progress_to_july_1
+effective_stabilization_sample = base_stabilization_sample × stabilization_multiplier(date)
 ```
 
 League averages (constants in `poisson.ts`, updated each season):

@@ -2,7 +2,7 @@ import { BlockMath, InlineMath } from 'react-katex'
 
 const lambdaMath = String.raw`\begin{aligned}
 \lambda &= 0.36 \times A_{\text{bounded}} \\
-A_{\text{raw}} &= F_{\text{FIP}} \times F_{K} \times F_{\text{barrel}} \times F_{\text{OBP}} \times F_{\text{park}} \times F_{\text{weather}} \\
+A_{\text{raw}} &= F_{\text{FIP}} \times F_{K} \times F_{\text{barrel}} \times F_{\text{OBP}} \times F_{\text{top3}} \times F_{\text{park}} \times F_{\text{weather}} \\
 A_{\text{bounded}} &= \operatorname{clamp}(A_{\text{raw}}, 0.55, 1.55)
 \end{aligned}`
 
@@ -17,6 +17,12 @@ const oddsMath = String.raw`\mathrm{break\mbox{-}even\ odds}=
 -\left\lceil \dfrac{100p}{1-p} \right\rceil & p \ge 0.50 \\
 +\left\lceil \dfrac{100(1-p)}{p} \right\rceil & p < 0.50
 \end{cases}`
+
+const stabilizationMath = String.raw`\begin{aligned}
+s_{\text{effective}} &= s_{0}\,m(d) \\
+m(d) &= 1.75 - 0.75\,p(d) \\
+p(d) &= \operatorname{clamp}\!\left(\dfrac{d-\text{Mar 15}}{\text{Jul 1}-\text{Mar 15}},\ 0,\ 1\right)
+\end{aligned}`
 
 const factorRows = [
   {
@@ -40,7 +46,13 @@ const factorRows = [
   {
     name: 'OBP factor',
     formula: String.raw`\left(\dfrac{\text{shrunk team OBP}}{0.310}\right)^{0.70}`,
-    description: 'Season OBP remains the lineup proxy, but it is shrunk by team plate appearances so April noise does not overwhelm the model.',
+    description: 'Season team OBP still anchors baseline offense, and the stabilization sample is heavier in April and May so tiny samples do not move the model too aggressively.',
+    source: 'MLB Stats API',
+  },
+  {
+    name: 'Top-3 lineup factor',
+    formula: String.raw`\left(\operatorname{clamp}\!\left(\dfrac{\text{shrunk top-3 OBP}}{\text{team OBP}},\ 0.90,\ 1.12\right)\right)^{0.45}`,
+    description: 'When a confirmed lineup is available, the first three hitters add a modest relative adjustment on top of the team baseline. If no confirmed order is posted, this factor stays neutral.',
     source: 'MLB Stats API',
   },
   {
@@ -92,16 +104,26 @@ export default function MethodologyView() {
           <InlineMath math={String.raw`\lambda`} /> represents the expected number of runs scored by one team in the first inning.
           The model starts from a baseline of <InlineMath math="0.36" />, which corresponds to roughly a
           league-average YRFI rate of <InlineMath math="51.4\%" />, and then adjusts that baseline with seven
-          stabilized inputs.
+          stabilized inputs plus a lineup-aware top-of-order tweak when a confirmed batting order is posted.
         </p>
         <FormulaBlock math={lambdaMath} align="left" className="mb-6" />
 
         <FactorTable factors={factorRows} />
 
+        <p className="mt-4 leading-relaxed">
+          Early-season shrinkage is date-adjusted rather than fixed. Each base stabilization sample is multiplied by:
+        </p>
+        <FormulaBlock math={stabilizationMath} align="left" className="mt-3 mb-3" />
+        <p className="text-slate-500 text-xs leading-relaxed">
+          That means April samples are pulled harder toward league average, and the extra shrinkage fades linearly to neutral by July 1.
+        </p>
+
         <p className="mt-4 text-slate-500 text-xs leading-relaxed">
           Each team&apos;s <InlineMath math={String.raw`\lambda`} /> uses that team&apos;s OBP and the <em>opposing</em>
           {' '}pitcher&apos;s stats,
-          because the home team bats against the away starter, and vice versa.
+          because the home team bats against the away starter, and vice versa. If a confirmed lineup is available,
+          the model also compares that team&apos;s top three hitters against its broader team baseline rather than treating
+          every batting order as interchangeable.
           The raw adjustment is then bounded to keep the model in a realistic MLB range, and league-average
           values are only used when the starter identity or a required stat feed is actually missing.
         </p>
@@ -141,11 +163,11 @@ export default function MethodologyView() {
       {/* Caveats */}
       <Section title="What the model doesn&apos;t capture">
         <ul className="space-y-1.5 text-slate-500 leading-relaxed list-disc list-inside">
-          <li>Lineup construction (leadoff hitter quality, platoon splits)</li>
+          <li>Full lineup construction beyond the published top three hitters, including platoon splits and bench contingencies</li>
           <li>Bullpen usage or opener strategies</li>
           <li>In-game factors like pitch count, injury, or weather changes mid-game</li>
           <li>Umpire tendencies or day/night splits</li>
-          <li>Residual sample-size noise early in the season, even after shrinkage toward league averages</li>
+          <li>Residual sample-size noise early in the season, even after heavier date-aware shrinkage toward league averages</li>
         </ul>
         <p className="mt-3 text-slate-500 text-xs leading-relaxed">
           This model is a starting point for identifying value, not a guaranteed edge.

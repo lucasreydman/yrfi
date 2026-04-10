@@ -9,10 +9,12 @@ export const PITCHER_FIP_STABILIZATION_IP = 45
 export const PITCHER_K_STABILIZATION_BF = 150
 export const TEAM_OBP_STABILIZATION_PA = 600
 export const SAVANT_STABILIZATION_IP = 50
+export const TOP_OF_ORDER_OBP_STABILIZATION_PA = 180
 
 const FIP_FACTOR_WEIGHT = 0.55
 const BARREL_FACTOR_WEIGHT = 0.35
 const OBP_FACTOR_WEIGHT = 0.70
+const TOP_OF_ORDER_FACTOR_WEIGHT = 0.45
 const PARK_FACTOR_WEIGHT = 0.50
 const WEATHER_FACTOR_WEIGHT = 0.50
 const MIN_ADJUSTMENT_FACTOR = 0.55
@@ -33,6 +35,27 @@ export function shrinkTowardAverage(
 
   const weight = sampleSize / (sampleSize + stabilizationSample)
   return average + (value - average) * weight
+}
+
+export function stabilizationMultiplierForDate(date: string): number {
+  const parsed = new Date(`${date}T12:00:00Z`)
+  if (Number.isNaN(parsed.getTime())) return 1
+
+  const year = parsed.getUTCFullYear()
+  const openingWindowStart = Date.UTC(year, 2, 15)
+  const stabilizationFloorDate = Date.UTC(year, 6, 1)
+  const progress = clamp(
+    (parsed.getTime() - openingWindowStart) / (stabilizationFloorDate - openingWindowStart),
+    0,
+    1,
+  )
+
+  return 1.75 - 0.75 * progress
+}
+
+export function dateAdjustedStabilizationSample(baseSample: number, date?: string): number {
+  if (!date) return baseSample
+  return baseSample * stabilizationMultiplierForDate(date)
 }
 
 export function tempFactor(tempF: number): number {
@@ -61,6 +84,7 @@ export interface LambdaParams {
   pitcherKPct: number        // 0–1 scale
   pitcherBarrelRate: number  // 0–100 scale
   teamOBP: number
+  topOfOrderOBP?: number
   parkFactor: number
   tempF: number
   windSpeedMph: number
@@ -74,6 +98,7 @@ export function computeLambda(params: LambdaParams): number {
     pitcherKPct,
     pitcherBarrelRate,
     teamOBP,
+    topOfOrderOBP,
     parkFactor,
     tempF,
     windSpeedMph,
@@ -89,13 +114,17 @@ export function computeLambda(params: LambdaParams): number {
   const barrelFactor = Math.pow(pitcherBarrelRate / LEAGUE_AVG_BARREL_PCT, BARREL_FACTOR_WEIGHT)
 
   const obpFactor = Math.pow(teamOBP / LEAGUE_AVG_OBP, OBP_FACTOR_WEIGHT)
+  const topOfOrderRatio = topOfOrderOBP && teamOBP > 0
+    ? clamp(topOfOrderOBP / teamOBP, 0.90, 1.12)
+    : 1
+  const topOfOrderFactor = Math.pow(topOfOrderRatio, TOP_OF_ORDER_FACTOR_WEIGHT)
 
   const tf = tempFactor(tempF)
   const wf = windFactor(windSpeedMph, windFromDegrees, outfieldFacingDegrees)
   const parkAdjustment = Math.pow(parkFactor, PARK_FACTOR_WEIGHT)
   const weatherAdjustment = Math.pow(tf * wf, WEATHER_FACTOR_WEIGHT)
   const combinedAdjustment = clamp(
-    fipFactor * kFactor * barrelFactor * obpFactor * parkAdjustment * weatherAdjustment,
+    fipFactor * kFactor * barrelFactor * obpFactor * topOfOrderFactor * parkAdjustment * weatherAdjustment,
     MIN_ADJUSTMENT_FACTOR,
     MAX_ADJUSTMENT_FACTOR,
   )
