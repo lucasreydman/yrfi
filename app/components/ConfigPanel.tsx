@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useSettings, TIMEZONES } from '@/app/context/SettingsContext'
 
-const triggerClass = 'min-h-12 w-full rounded-full px-5 py-2.5 text-sm font-medium transition-colors sm:min-h-0 sm:w-auto sm:px-4 sm:py-1.5'
+const triggerClass = 'min-h-10 w-full rounded-full px-4 py-2 text-sm font-medium transition-colors sm:min-h-0 sm:w-auto sm:px-4 sm:py-1.5'
 
 function GearIcon() {
   return (

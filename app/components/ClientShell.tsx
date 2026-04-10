@@ -10,7 +10,7 @@ import MethodologyView from './MethodologyView'
 import ConfigPanel from './ConfigPanel'
 import { SettingsProvider } from '@/app/context/SettingsContext'
 
-const mobilePillClass = 'min-h-12 rounded-full px-5 py-2.5 text-sm font-medium transition-colors sm:min-h-0 sm:px-4 sm:py-1.5'
+const mobilePillClass = 'min-h-10 rounded-full px-4 py-2 text-sm font-medium transition-colors sm:min-h-0 sm:px-4 sm:py-1.5'
 
 function getPacificToday(): string {
   return new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Los_Angeles' }).format(new Date())
@@ -107,7 +107,7 @@ export default function ClientShell() {
               <line x1="12" y1="20" x2="12" y2="4" />
               <line x1="6" y1="20" x2="6" y2="14" />
             </svg>
-            <span className="sm:hidden">Model</span>
+            <span className="sm:hidden">Methodology</span>
             <span className="hidden sm:inline">Methodology</span>
           </button>
         </div>
@@ -156,6 +156,18 @@ export default function ClientShell() {
           )}
         </>
       )}
+
+      <footer className="border-t border-slate-100 px-4 py-5 text-center text-sm text-slate-500">
+        Built by{' '}
+        <a
+          href="https://lucasreydman.xyz"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="font-medium text-green-700 underline decoration-green-200 underline-offset-2 transition-colors hover:text-green-800"
+        >
+          Lucas Reydman
+        </a>
+      </footer>
     </div>
     </SettingsProvider>
   )
