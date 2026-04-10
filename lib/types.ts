@@ -5,8 +5,6 @@ export interface SavantStats {
   inningsPitched: number   // used only for 50 IP qualification check
 }
 
-export type PitcherStatus = 'confirmed' | 'probable' | 'tbd'
-
 export interface PitcherStats {
   playerId: number
   name: string
@@ -14,8 +12,7 @@ export interface PitcherStats {
   kPct: number             // strikeouts / batters faced (0–1 scale)
   barrelRate: number       // from Savant; league avg fallback if < 50 IP or missing
   hardHitRate: number      // from Savant; league avg fallback
-  confirmed: boolean       // true when starter is lineup/game confirmed
-  status: PitcherStatus
+  confirmed: boolean       // false if TBD — league avg stats used
 }
 
 export interface WeatherData {

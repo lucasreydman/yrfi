@@ -1,6 +1,6 @@
 'use client'
 
-import type { GameResult, PitcherStats } from '@/lib/types'
+import type { GameResult } from '@/lib/types'
 import GameRow from './GameRow'
 import { useSettings, resolveTimezone } from '@/app/context/SettingsContext'
 import { getTeamDisplayName } from '@/lib/team-names'
@@ -39,28 +39,9 @@ function MobileResultBadge({ game }: { game: GameResult }) {
   return <span className="text-slate-300 text-sm">—</span>
 }
 
-function MobilePitcherStatusBadge({ pitcher }: { pitcher: PitcherStats }) {
-  if (pitcher.status === 'tbd') {
-    return <span className="rounded-full bg-slate-100 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-slate-500">TBD</span>
-  }
-  if (pitcher.status === 'probable') {
-    return <span className="rounded-full bg-amber-100 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-700">P</span>
-  }
-  return <span className="rounded-full bg-green-100 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-green-700">C</span>
-}
-
-function MobilePitcherLabel({ pitcher }: { pitcher: PitcherStats }) {
-  return (
-    <span className="inline-flex max-w-full items-center gap-1.5 align-middle">
-      <span className="truncate">{pitcher.name}</span>
-      <MobilePitcherStatusBadge pitcher={pitcher} />
-    </span>
-  )
-}
-
 function MobileCard({ game }: { game: GameResult }) {
   const { settings } = useSettings()
-  const estimated = game.homePitcher.status === 'tbd' || game.awayPitcher.status === 'tbd'
+  const estimated = !game.homePitcher.confirmed || !game.awayPitcher.confirmed
   const awayTeam = getTeamDisplayName(game.awayTeam)
   const homeTeam = getTeamDisplayName(game.homeTeam)
   const pct = `${estimated ? '~' : ''}${Math.round(game.yrfiProbability * 100)}%`
@@ -98,11 +79,7 @@ function MobileCard({ game }: { game: GameResult }) {
         </div>
       </div>
       <div className="mt-1 flex items-center justify-between text-sm text-slate-500">
-        <span className="min-w-0 truncate">
-          <MobilePitcherLabel pitcher={game.awayPitcher} />
-          <span className="mx-1 text-slate-300">vs</span>
-          <MobilePitcherLabel pitcher={game.homePitcher} />
-        </span>
+        <span>{game.awayPitcher.name} vs {game.homePitcher.name}</span>
         <span className="font-medium text-slate-700">{odds}</span>
       </div>
       <div className="mt-0.5 flex items-center gap-2 text-xs text-slate-400">

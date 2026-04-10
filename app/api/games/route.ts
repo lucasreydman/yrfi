@@ -16,23 +16,9 @@ import {
   LEAGUE_AVG_OBP,
   LEAGUE_AVG_HARD_HIT_PCT,
 } from '@/lib/poisson'
-import type { GameResult, GamesResponse, PitcherStats, PitcherStatus } from '@/lib/types'
+import type { GameResult, GamesResponse, PitcherStats } from '@/lib/types'
 
 const RESPONSE_TTL_SECONDS = 300 // 5 minutes
-
-function hasConfirmedLineup(players?: Array<{ id: number }>): boolean {
-  return Array.isArray(players) && players.length > 0
-}
-
-function getPitcherStatus(
-  pitcher: { id: number; fullName: string } | undefined,
-  hasLineup: boolean,
-  gameStatus: GameResult['gameStatus'],
-): PitcherStatus {
-  if (!pitcher) return 'tbd'
-  if (gameStatus === 'inProgress' || gameStatus === 'settled' || hasLineup) return 'confirmed'
-  return 'probable'
-}
 
 function getPacificDate(): string {
   return new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Los_Angeles' }).format(new Date())
@@ -102,20 +88,9 @@ export async function GET(req: NextRequest) {
         const weather = weatherByVenue.get(venueId) ?? { tempF: 72, windSpeedMph: 0, windFromDegrees: 0, failure: false }
         const parkFactor = getParkFactor(venueId)
         const outfieldFacing = getOutfieldFacingDegrees(venueId)
-        const homePitcherStatus = getPitcherStatus(
-          game.teams.home.probablePitcher,
-          hasConfirmedLineup(game.lineups?.homePlayers),
-          gameStatus,
-        )
-        const awayPitcherStatus = getPitcherStatus(
-          game.teams.away.probablePitcher,
-          hasConfirmedLineup(game.lineups?.awayPlayers),
-          gameStatus,
-        )
 
         function buildPitcherStats(
           pitcher: { id: number; fullName: string } | undefined,
-          status: PitcherStatus,
         ): PitcherStats {
           if (!pitcher) {
             return {
@@ -123,7 +98,6 @@ export async function GET(req: NextRequest) {
               fip: LEAGUE_AVG_FIP, kPct: LEAGUE_AVG_K_PCT,
               barrelRate: LEAGUE_AVG_BARREL_PCT, hardHitRate: LEAGUE_AVG_HARD_HIT_PCT,
               confirmed: false,
-              status,
             }
           }
           const stats = pitcherStatsMap.get(pitcher.id) ?? { fip: LEAGUE_AVG_FIP, kPct: LEAGUE_AVG_K_PCT }
@@ -132,13 +106,12 @@ export async function GET(req: NextRequest) {
             playerId: pitcher.id, name: pitcher.fullName,
             fip: stats.fip, kPct: stats.kPct,
             barrelRate: savant.barrelRate, hardHitRate: savant.hardHitRate,
-            confirmed: status === 'confirmed',
-            status,
+            confirmed: true,
           }
         }
 
-        const homePitcher = buildPitcherStats(game.teams.home.probablePitcher, homePitcherStatus)
-        const awayPitcher = buildPitcherStats(game.teams.away.probablePitcher, awayPitcherStatus)
+        const homePitcher = buildPitcherStats(game.teams.home.probablePitcher)
+        const awayPitcher = buildPitcherStats(game.teams.away.probablePitcher)
         const homeOBP = teamOBPMap.get(game.teams.home.team.id) ?? LEAGUE_AVG_OBP
         const awayOBP = teamOBPMap.get(game.teams.away.team.id) ?? LEAGUE_AVG_OBP
 
