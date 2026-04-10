@@ -111,11 +111,13 @@ npx vercel --prod # Deploy to production
 - **Date range:** Today and tomorrow (Pacific calendar day as anchor)
 - **Auto-refresh:** API re-fetched every 5 minutes; UI clock updates every 60s (no extra API call)
 - **Game groups:** Upcoming → In Progress → Settled
+- **Responsive layout:** Mobile uses stacked game cards, condensed controls, and a card-based methodology view; desktop keeps the fixed-width ranked table layout
 - **Matchup labels:** Team nicknames only in table and mobile card views (for example, Yankees, Twins, Red Sox)
 - **YRFI % colors:** green ≥ 55%, yellow 45–54%, red < 45%
 - **YRFI % display:** Percentages render to one decimal place
 - **Result column:** Upcoming shows `—`, in-progress first innings show `IP`, scoring first innings show `RUN`, and scoreless first innings show `NO RUN`
 - **Desktop table alignment:** Temp, Wind, Time, and Result use centered fixed-width columns for uniform spacing
+- **Mobile controls:** Date selection, refresh state, preferences, and methodology toggle collapse cleanly without changing desktop behavior
 - **TBD or missing pitcher data:** Model falls back to league-average inputs; values prefixed with `~`
 - **Lineup-aware boost:** If a confirmed batting order is posted, the model compares the top three hitters against the team baseline and nudges the YRFI number accordingly
 - **Roofed/retractable parks:** Weather is neutralized and the UI shows `Roof`

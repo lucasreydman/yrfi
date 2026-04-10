@@ -47,10 +47,10 @@ lib/
   site.ts                   # getSiteUrl(), SITE_NAME = 'YRFI'
   components/
     ClientShell.tsx         # Root client component; owns state; two timers: re-fetch every 5 min (API call), re-render every 60s (UI clock update only — no API call)
-    GameTable.tsx           # Ranked table (desktop) + card list (mobile)
+    GameTable.tsx           # Ranked table (desktop) + stacked card list (mobile)
     GameRow.tsx             # Single table row: teams, pitchers, YRFI %, min odds, weather, time, result badge
-    DatePicker.tsx          # Today/tomorrow navigation using Pacific slate date (America/Los_Angeles)
-    StatusBar.tsx           # Last updated timestamp, game count, manual refresh button
+    DatePicker.tsx          # Today/tomorrow navigation using Pacific slate date (America/Los_Angeles); wraps cleanly on mobile
+    StatusBar.tsx           # Last updated timestamp, game count, manual refresh button; stacks on mobile
     LoadingSkeleton.tsx     # Loading state with elapsed timer
 ```
 
@@ -71,10 +71,11 @@ lib/
 4. Sort games by YRFI probability descending.
 5. Write compiled response to KV (`games-response:{date}`, 5-min TTL).
 6. Client groups rows by `gameStatus`: Upcoming → In Progress → Settled.
-7. `ClientShell` runs two independent timers:
+7. UI is responsive by design: mobile uses stacked game cards plus card-based methodology factors, while desktop preserves the fixed-width table layout.
+8. `ClientShell` runs two independent timers:
    - **Re-fetch timer (5 min):** silently calls `/api/games` and updates state.
    - **Re-render timer (60s):** triggers a React state update to refresh elapsed-time displays — no API call.
-8. **Staleness acknowledgement:** The 5-min KV cache means in-progress first-inning results may be up to ~10 min stale in worst case (KV cache remaining + next poll cycle). Acceptable for v1 since primary use is pre-game.
+9. **Staleness acknowledgement:** The 5-min KV cache means in-progress first-inning results may be up to ~10 min stale in worst case (KV cache remaining + next poll cycle). Acceptable for v1 since primary use is pre-game.
 
 ---
 

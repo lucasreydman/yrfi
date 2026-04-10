@@ -31,7 +31,7 @@
 | `app/components/StatusBar.tsx` | Last updated, game count, refresh button |
 | `app/components/DatePicker.tsx` | Today/tomorrow navigation |
 | `app/components/GameRow.tsx` | Single desktop table row |
-| `app/components/GameTable.tsx` | Full ranked table + mobile card list |
+| `app/components/GameTable.tsx` | Full ranked table + stacked mobile card list |
 | `app/components/ClientShell.tsx` | Root client component, state, two timers |
 | `app/page.tsx` | Server component shell |
 | `app/layout.tsx` | Root layout, metadata, OG tags |
