@@ -97,6 +97,10 @@ Wind factor requires `outfieldFacingDegrees` from the stadium constants in `weat
 - **Responsive:** `sm:hidden` / `hidden sm:block` pattern for mobile cards vs desktop table
 - **Game grouping:** Upcoming → In Progress → Settled
 - **Date anchor:** Pacific calendar day (`America/Los_Angeles`) for slate date
+- **Matchup labels:** Use team nicknames in matchup display, not full city-plus-team names
+- **YRFI display:** Show percentages to one decimal place
+- **Result states:** Upcoming = `—`, pending in-progress first inning = `IP`, run scored = `RUN`, scoreless first inning = `NO RUN`
+- **Desktop compact columns:** Temp, Wind, Time, and Result are centered fixed-width columns for consistent alignment
 
 ---
 

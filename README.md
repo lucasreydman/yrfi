@@ -1,9 +1,9 @@
 # YRFI — MLB First Inning Betting Edge
 
-A standalone MLB betting tool that calculates the probability of a run being scored in the first inning (**YRFI** — Yes Run First Inning) for every game on today's slate.
+A standalone MLB betting tool that calculates the probability of a run being scored in the first inning (**YRFI** — Yes Run First Inning) for every game on the selected slate.
 
 For each game it shows:
-- The model's **YRFI probability** (%)
+- The model's **YRFI probability** (%) to one decimal place
 - The **minimum American odds** needed at your sportsbook for a +EV bet
 
 No sportsbook integration — you compare the threshold against your own book and decide.
@@ -108,7 +108,11 @@ npx vercel --prod # Deploy to production
 - **Date range:** Today and tomorrow (Pacific calendar day as anchor)
 - **Auto-refresh:** API re-fetched every 5 minutes; UI clock updates every 60s (no extra API call)
 - **Game groups:** Upcoming → In Progress → Settled
+- **Matchup labels:** Team nicknames only in table and mobile card views (for example, Yankees, Twins, Red Sox)
 - **YRFI % colors:** green ≥ 55%, yellow 45–54%, red < 45%
+- **YRFI % display:** Percentages render to one decimal place
+- **Result column:** Upcoming shows `—`, in-progress first innings show `IP`, scoring first innings show `RUN`, and scoreless first innings show `NO RUN`
+- **Desktop table alignment:** Temp, Wind, Time, and Result use centered fixed-width columns for uniform spacing
 - **TBD pitchers:** Model runs with league-average stats; values prefixed with `~`
 - **Weather failure:** Factors default to 1.0; weather column shows `—`
 - **Preferences:** Temperature unit, wind unit, odds format, timezone — persisted in localStorage
