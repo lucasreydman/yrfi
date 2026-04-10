@@ -3,6 +3,7 @@
 import type { GameResult } from '@/lib/types'
 import GameRow from './GameRow'
 import { useSettings, resolveTimezone } from '@/app/context/SettingsContext'
+import { getTeamDisplayName } from '@/lib/team-names'
 
 interface GameTableProps {
   games: GameResult[]
@@ -41,6 +42,8 @@ function MobileResultBadge({ game }: { game: GameResult }) {
 function MobileCard({ game }: { game: GameResult }) {
   const { settings } = useSettings()
   const estimated = !game.homePitcher.confirmed || !game.awayPitcher.confirmed
+  const awayTeam = getTeamDisplayName(game.awayTeam)
+  const homeTeam = getTeamDisplayName(game.homeTeam)
   const pct = `${estimated ? '~' : ''}${Math.round(game.yrfiProbability * 100)}%`
   const odds = formatOddsDisplay(game.breakEvenOdds, estimated, settings.oddsFormat)
   const time = new Date(game.gameTime).toLocaleTimeString([], {
@@ -66,9 +69,9 @@ function MobileCard({ game }: { game: GameResult }) {
     <div className="border-b border-slate-100 px-4 py-3">
       <div className="flex items-center justify-between">
         <div className="font-medium">
-          <span className="text-slate-500">{game.awayTeam}</span>
+          <span className="text-slate-500">{awayTeam}</span>
           <span className="mx-1 text-slate-300">@</span>
-          <span>{game.homeTeam}</span>
+          <span>{homeTeam}</span>
         </div>
         <div className="flex items-center gap-2">
           <MobileResultBadge game={game} />
