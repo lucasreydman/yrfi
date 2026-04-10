@@ -4,6 +4,7 @@ import type { GameResult } from '@/lib/types'
 import GameRow from './GameRow'
 import { useSettings, resolveTimezone } from '@/app/context/SettingsContext'
 import { getTeamDisplayName } from '@/lib/team-names'
+import { getYrfiTextClass } from '@/lib/yrfi-color'
 
 interface GameTableProps {
   games: GameResult[]
@@ -51,10 +52,7 @@ function MobileCard({ game }: { game: GameResult }) {
     minute: '2-digit',
     timeZone: resolveTimezone(settings.timezone),
   })
-
-  const yrfiColor = game.yrfiProbability >= 0.55
-    ? 'text-green-700' : game.yrfiProbability >= 0.45
-    ? 'text-yellow-600' : 'text-red-600'
+  const yrfiColorClass = getYrfiTextClass(game.yrfiProbability)
 
   const tempStr = game.weather.controlled ? 'Roof' : game.weather.failure ? '—' : settings.tempUnit === 'C'
     ? `${Math.round((game.weather.tempF - 32) * 5 / 9)}°C`
@@ -75,7 +73,9 @@ function MobileCard({ game }: { game: GameResult }) {
         </div>
         <div className="flex items-center gap-2">
           <MobileResultBadge game={game} />
-          <div className={`text-lg font-bold tabular-nums ${yrfiColor}`}>{pct}</div>
+          <div className={`text-lg font-bold tabular-nums ${yrfiColorClass}`}>
+            {pct}
+          </div>
         </div>
       </div>
       <div className="mt-1 flex items-center justify-between text-sm text-slate-500">

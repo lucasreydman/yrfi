@@ -3,15 +3,10 @@
 import type { GameResult } from '@/lib/types'
 import { useSettings, resolveTimezone } from '@/app/context/SettingsContext'
 import { getTeamDisplayName } from '@/lib/team-names'
+import { getYrfiTextClass } from '@/lib/yrfi-color'
 
 interface GameRowProps {
   game: GameResult
-}
-
-function yrfiColor(pct: number): string {
-  if (pct >= 0.55) return 'text-green-700 font-semibold'
-  if (pct >= 0.45) return 'text-yellow-600 font-semibold'
-  return 'text-red-600 font-semibold'
 }
 
 function formatPct(p: number, estimated: boolean): string {
@@ -82,6 +77,7 @@ export default function GameRow({ game }: GameRowProps) {
   const temp = formatTemp(game.weather, settings.tempUnit)
   const wind = formatWind(game.weather, settings.windUnit)
   const time = formatTime(game.gameTime, resolveTimezone(settings.timezone))
+  const yrfiColorClass = getYrfiTextClass(game.yrfiProbability)
 
   return (
     <tr className="border-b border-slate-100 hover:bg-slate-50">
@@ -102,7 +98,9 @@ export default function GameRow({ game }: GameRowProps) {
         <span className="block max-w-full truncate whitespace-nowrap">{game.homePitcher.name}</span>
       </td>
       {/* YRFI % */}
-      <td className={`px-4 py-3 align-middle whitespace-nowrap tabular-nums ${yrfiColor(game.yrfiProbability)}`}>{pct}</td>
+      <td className={`px-4 py-3 align-middle whitespace-nowrap tabular-nums font-semibold ${yrfiColorClass}`}>
+        {pct}
+      </td>
       {/* Bet at */}
       <td className="px-4 py-3 align-middle whitespace-nowrap text-sm font-medium text-slate-700 tabular-nums">{odds}</td>
       {/* Temp */}

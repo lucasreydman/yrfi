@@ -20,9 +20,24 @@ export default function StatusBar({ generatedAt, gameCount, onRefresh, refreshin
       <button
         onClick={onRefresh}
         disabled={refreshing}
-        className="rounded px-2 py-1 text-xs text-slate-500 hover:bg-slate-100 disabled:opacity-50"
+        className="inline-flex items-center gap-1.5 rounded px-2 py-1 text-sm text-slate-500 transition-colors hover:bg-slate-100 disabled:opacity-50"
       >
-        {refreshing ? 'Refreshing…' : 'Refresh'}
+        {refreshing && (
+          <svg
+            className="size-3.5 animate-spin"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden="true"
+          >
+            <path d="M21 12a9 9 0 1 1-2.64-6.36" />
+            <path d="M21 3v6h-6" />
+          </svg>
+        )}
+        <span>{refreshing ? 'Refreshing…' : 'Refresh'}</span>
       </button>
     </div>
   )
