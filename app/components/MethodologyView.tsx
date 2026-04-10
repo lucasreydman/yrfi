@@ -10,9 +10,9 @@ A_{\text{bounded}} &= \operatorname{clamp}(A_{\text{raw}}, 0.55, 1.55)
 \end{aligned}`
 
 const yrfiMath = String.raw`\begin{aligned}
-P(\mathrm{YRFI}) &= 1 - P(\text{home scores }0)\,P(\text{away scores }0) \\
-&= 1 - e^{-\lambda_{\text{home}}} e^{-\lambda_{\text{away}}} \\
-&= 1 - e^{-(\lambda_{\text{home}} + \lambda_{\text{away}})}
+P(\mathrm{YRFI}) &= 1 - P(H=0)\,P(A=0) \\
+&= 1 - e^{-\lambda_H} e^{-\lambda_A} \\
+&= 1 - e^{-(\lambda_H + \lambda_A)}
 \end{aligned}`
 
 const oddsMath = String.raw`\mathrm{break\mbox{-}even\ odds}=
@@ -38,10 +38,7 @@ const factorRows = [
   {
     name: 'K% factor',
     formula: String.raw`\operatorname{clamp}\!\left(1 + 0.3\,\dfrac{0.23 - \text{shrunk }K\%}{0.23},\ 0.85,\ 1.15\right)`,
-    mobileFormula: String.raw`\begin{aligned}
-\operatorname{clamp}\!\left(&1 + 0.3\,\dfrac{0.23 - \text{shrunk }K\%}{0.23},\\
-&0.85,\ 1.15\right)
-\end{aligned}`,
+    mobileFormula: String.raw`\operatorname{clamp}\!\left(1 + 0.3\,\dfrac{0.23-K\%}{0.23},\ 0.85,\ 1.15\right)`,
     description: 'Strikeout rate is shrunk toward league average by batters faced, then clamped so a single extreme K% cannot swing the estimate by more than ±15%.',
     source: 'MLB Stats API',
   },
@@ -62,10 +59,7 @@ const factorRows = [
   {
     name: 'Top-3 lineup factor',
     formula: String.raw`\left(\operatorname{clamp}\!\left(\dfrac{\text{shrunk top-3 OBP}}{\text{team OBP}},\ 0.90,\ 1.12\right)\right)^{0.45}`,
-    mobileFormula: String.raw`\begin{aligned}
-\left(\operatorname{clamp}\!\left(&\dfrac{\text{shrunk top-3 OBP}}{\text{team OBP}},\\
-&0.90,\ 1.12\right)\right)^{0.45}
-\end{aligned}`,
+    mobileFormula: String.raw`\left(\operatorname{clamp}\!\left(\dfrac{OBP_{top3}}{OBP_{team}},\ 0.90,\ 1.12\right)\right)^{0.45}`,
     description: 'When a confirmed lineup is available, the first three hitters add a modest relative adjustment on top of the team baseline. If no confirmed order is posted, this factor stays neutral.',
     source: 'MLB Stats API',
   },
@@ -79,22 +73,14 @@ const factorRows = [
   {
     name: 'Temp factor',
     formula: String.raw`T<55^\circ\!F\to0.92,\ T>80^\circ\!F\to1.06,\ \text{else }1.00`,
-    mobileFormula: String.raw`\begin{aligned}
-T<55^\circ\!F&\to0.92\\
-T>80^\circ\!F&\to1.06\\
-  &\mathrm{else}\to1.00
-\end{aligned}`,
+    mobileFormula: String.raw`T<55^\circ\!F\to0.92,\ T>80^\circ\!F\to1.06,\ \mathrm{else}\to1.00`,
     description: 'Cold air suppresses carry and hot air helps it slightly. Fixed-roof and retractable-roof parks are treated as neutral to avoid fake weather edge when roof state is unknown.',
     source: 'Open-Meteo',
   },
   {
     name: 'Wind factor',
     formula: String.raw`\ge10\ \mathrm{mph}:\ \text{in}\to0.93,\ \text{out}\to1.08,\ \text{cross}\to1.00`,
-    mobileFormula: String.raw`\begin{aligned}
-\ge10\ \mathrm{mph}:\ &\text{in}\to0.93\\
-&\text{out}\to1.08\\
-&\text{cross}\to1.00
-\end{aligned}`,
+    mobileFormula: String.raw`\ge10\ \mathrm{mph}:\ \mathrm{in}\to0.93,\ \mathrm{out}\to1.08,\ \mathrm{cross}\to1.00`,
     description: 'Wind direction is resolved relative to each park\'s outfield orientation, then the total weather effect is damped so one forecast input cannot create an unrealistic number.',
     source: 'Open-Meteo',
   },
