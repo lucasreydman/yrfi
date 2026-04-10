@@ -77,7 +77,7 @@ function PitcherName({ pitcher }: { pitcher: GameResult['homePitcher'] }) {
   const showLimitedData = pitcher.confirmed && pitcher.estimated
 
   return (
-    <span className="flex min-w-0 flex-col gap-1">
+    <span className="flex min-w-0 flex-col items-start gap-1">
       <span className="block max-w-full truncate whitespace-nowrap">{pitcher.name}</span>
       {showLimitedData ? <LimitedDataBadge /> : null}
     </span>
