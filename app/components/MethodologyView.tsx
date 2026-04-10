@@ -130,10 +130,10 @@ export default function MethodologyView() {
       <Section title="Data sources">
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           {[
-            { name: 'MLB Stats API', url: 'https://statsapi.mlb.com', detail: 'Schedule, pitcher season stats (FIP inputs), team OBP — free, no key required' },
-            { name: 'Baseball Savant', url: 'https://baseballsavant.mlb.com', detail: 'Statcast metrics: barrel rate, hard-hit % — free CSV download, no key required' },
-            { name: 'FanGraphs', url: 'https://www.fangraphs.com/guts.aspx?type=pfh', detail: 'Park factors (1.00 scale) — hardcoded per season, updated annually' },
-            { name: 'Open-Meteo', url: 'https://open-meteo.com', detail: 'Hourly forecast: temperature, wind speed, wind direction — free, no key required' },
+            { name: 'MLB Stats API', url: 'https://github.com/toddrob99/MLB-StatsAPI', detail: 'Provides schedule data, pitcher season stats for FIP inputs, and team OBP. Free to use with no key required.' },
+            { name: 'Baseball Savant', url: 'https://baseballsavant.mlb.com', detail: 'Provides Statcast barrel rate and hard-hit rate data through free CSV downloads.' },
+            { name: 'FanGraphs', url: 'https://www.fangraphs.com/guts.aspx?type=pfh', detail: 'Provides park factors on a 1.00 scale. These values are hardcoded by season and updated annually.' },
+            { name: 'Open-Meteo', url: 'https://open-meteo.com', detail: 'Provides hourly temperature, wind speed, and wind direction forecasts. Free to use with no key required.' },
           ].map(s => (
             <a
               key={s.name}
