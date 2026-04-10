@@ -14,6 +14,7 @@ export default function DatePicker({ date, onChange }: DatePickerProps) {
   const tomorrow = new Date(today)
   tomorrow.setDate(tomorrow.getDate() + 1)
   const tomorrowStr = tomorrow.toISOString().split('T')[0]
+  const buttonClass = 'min-h-12 flex-1 rounded-full px-5 py-2.5 text-sm font-medium transition-colors sm:min-h-0 sm:flex-none sm:px-4 sm:py-1.5'
 
   return (
     <div className="flex w-full flex-wrap gap-2 sm:w-auto sm:flex-nowrap">
@@ -21,7 +22,7 @@ export default function DatePicker({ date, onChange }: DatePickerProps) {
         <button
           key={d}
           onClick={() => onChange(d)}
-          className={`flex-1 rounded-full px-4 py-1.5 text-sm font-medium transition-colors sm:flex-none ${
+          className={`${buttonClass} ${
             date === d
               ? 'bg-green-600 text-white'
               : 'bg-slate-100 text-slate-600 hover:bg-slate-200'

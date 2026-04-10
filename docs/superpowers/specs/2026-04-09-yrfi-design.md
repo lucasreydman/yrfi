@@ -50,7 +50,7 @@ lib/
     GameTable.tsx           # Ranked table (desktop) + stacked card list (mobile)
     GameRow.tsx             # Single table row: teams, pitchers, YRFI %, min odds, weather, time, result badge
     DatePicker.tsx          # Today/tomorrow navigation using Pacific slate date (America/Los_Angeles); wraps cleanly on mobile
-    StatusBar.tsx           # Last updated timestamp, game count, manual refresh button; stacks on mobile
+    StatusBar.tsx           # Last updated timestamp, game count, manual refresh button; stays inline on mobile
     ConfigPanel.tsx         # Preferences control; dropdown on desktop, centered modal on mobile
     LoadingSkeleton.tsx     # Loading state with elapsed timer
 ```

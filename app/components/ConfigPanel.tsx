@@ -3,6 +3,8 @@
 import { useEffect, useRef, useState } from 'react'
 import { useSettings, TIMEZONES } from '@/app/context/SettingsContext'
 
+const triggerClass = 'min-h-12 w-full rounded-full px-5 py-2.5 text-sm font-medium transition-colors sm:min-h-0 sm:w-auto sm:px-4 sm:py-1.5'
+
 function GearIcon() {
   return (
     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -91,7 +93,7 @@ export default function ConfigPanel() {
       <button
         type="button"
         onClick={() => setOpen(o => !o)}
-        className={`flex min-h-12 w-full items-center justify-center gap-2 rounded-full px-5 py-2.5 text-sm font-medium transition-colors sm:min-h-0 sm:w-auto sm:px-3 sm:py-1.5 ${
+        className={`flex items-center justify-center gap-2 ${triggerClass} ${
           open
             ? 'bg-green-600 text-white'
             : 'bg-slate-100 text-slate-600 hover:bg-slate-200'

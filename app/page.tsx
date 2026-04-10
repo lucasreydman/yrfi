@@ -10,7 +10,9 @@ export default function Home() {
             <h1 className="text-[1.75rem] font-bold leading-none tracking-tight text-green-600 sm:text-[2rem]">{SITE_NAME}</h1>
             <span className="text-xs font-semibold tracking-tight text-green-500 sm:text-sm">.vercel.app</span>
           </div>
-          <span className="hidden text-sm text-slate-400 sm:block">Books shade extra vig into public NRFI prices, so why not hunt for EV on the other side?</span>
+          <span className="max-w-xl text-xs leading-snug text-slate-400 sm:text-sm">
+            Books shade extra vig into public NRFI prices, so why not hunt for EV on the other side?
+          </span>
         </div>
       </header>
       <ClientShell />

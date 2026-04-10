@@ -62,6 +62,7 @@ function MobileCard({ game }: { game: GameResult }) {
     : settings.windUnit === 'kmh'
       ? `${Math.round(game.weather.windSpeedMph * 1.60934)} km/h`
       : `${game.weather.windSpeedMph} mph`
+  const weatherSummary = tempStr === 'Roof' && windStr === 'Roof' ? 'Roof' : `${tempStr} · ${windStr}`
 
   return (
     <article className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm shadow-slate-200/50">
@@ -97,7 +98,7 @@ function MobileCard({ game }: { game: GameResult }) {
         <Metric label="Bet at" value={odds} valueClassName={estimated ? 'text-slate-300' : 'text-slate-700'} />
         <Metric label="Result" value={<MobileResultBadge game={game} />} />
         <Metric label="First pitch" value={time} />
-        <Metric label="Weather" value={`${tempStr} · ${windStr}`} />
+        <Metric label="Weather" value={weatherSummary} />
       </div>
     </article>
   )
