@@ -6,7 +6,9 @@ import { SITE_NAME, getSiteUrl } from '@/lib/site'
 const geist = Geist({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-  title: 'MLB YRFI Betting Model',
+  title: {
+    absolute: 'MLB YRFI Betting Model',
+  },
   description: 'Find the minimum odds you need to bet YRFI with a statistical edge. Model-driven, updated daily.',
   icons: {
     icon: [

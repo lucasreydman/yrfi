@@ -80,7 +80,7 @@ function MobileCard({ game }: { game: GameResult }) {
       </div>
       <div className="mt-1 flex items-center justify-between text-sm text-slate-500">
         <span>{game.awayPitcher.name} vs {game.homePitcher.name}</span>
-        <span className={estimated ? 'text-slate-300' : 'font-medium text-slate-700'}>{odds}</span>
+        <span className={estimated ? 'inline-flex min-w-[3ch] justify-center text-slate-300' : 'font-medium text-slate-700'}>{odds}</span>
       </div>
       <div className="mt-0.5 flex items-center gap-2 text-xs text-slate-400">
         <span>{time}</span>
