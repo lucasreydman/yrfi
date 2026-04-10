@@ -1,5 +1,5 @@
-const MIN_REALISTIC_YRFI = 0.40
-const MAX_REALISTIC_YRFI = 0.60
+const MIN_REALISTIC_YRFI = 0.46
+const MAX_REALISTIC_YRFI = 0.54
 const YRFI_COLOR_CLASSES = [
   'text-[hsl(12_82%_42%)]',
   'text-[hsl(24_82%_42%)]',

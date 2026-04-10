@@ -357,7 +357,7 @@ Keyed by MLB Stats API `venueId`.
 **Identity:** Distinct from bvp-betting. Light/white base, bold green accent (`#16a34a`), slate for secondary text. Clean, data-forward.
 
 **OG metadata:**
-- Title: `YRFI — MLB First Inning Betting Edge`
+- Title: `YRFI — MLB YRFI Betting Model`
 - Description: `Find the minimum odds you need to bet YRFI with a statistical edge. Model-driven, updated daily.`
 
 **Main table columns (desktop):**

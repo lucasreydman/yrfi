@@ -1898,10 +1898,10 @@ import { SITE_NAME, getSiteUrl } from '@/lib/site'
 const geist = Geist({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-  title: `${SITE_NAME} — MLB First Inning Betting Edge`,
+  title: `${SITE_NAME} — MLB YRFI Betting Model`,
   description: 'Find the minimum odds you need to bet YRFI with a statistical edge. Model-driven, updated daily.',
   openGraph: {
-    title: `${SITE_NAME} — MLB First Inning Betting Edge`,
+    title: `${SITE_NAME} — MLB YRFI Betting Model`,
     description: 'Find the minimum odds you need to bet YRFI with a statistical edge. Model-driven, updated daily.',
     url: getSiteUrl(),
     siteName: SITE_NAME,
@@ -1932,7 +1932,7 @@ export default function Home() {
       <header className="border-b border-slate-200 bg-white px-4 py-4">
         <div className="mx-auto max-w-5xl flex items-baseline gap-3">
           <h1 className="text-2xl font-bold tracking-tight text-green-600">{SITE_NAME}</h1>
-          <span className="hidden text-sm text-slate-400 sm:block">MLB first inning betting edge</span>
+          <span className="hidden text-sm text-slate-400 sm:block">MLB YRFI Betting Model</span>
         </div>
       </header>
       <ClientShell />

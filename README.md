@@ -1,4 +1,4 @@
-# YRFI — MLB First Inning Betting Edge
+# YRFI — MLB YRFI Betting Model
 
 A standalone MLB betting tool that calculates the probability of a run being scored in the first inning (**YRFI** — Yes Run First Inning) for every game on the selected slate.
 
