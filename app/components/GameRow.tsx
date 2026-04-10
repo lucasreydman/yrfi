@@ -2,6 +2,7 @@
 
 import type { GameResult } from '@/lib/types'
 import { useSettings, resolveTimezone } from '@/app/context/SettingsContext'
+import { getTeamDisplayName } from '@/lib/team-names'
 
 interface GameRowProps {
   game: GameResult
@@ -72,6 +73,8 @@ function ResultBadge({ game }: { game: GameResult }) {
 export default function GameRow({ game }: GameRowProps) {
   const { settings } = useSettings()
   const estimated = !game.homePitcher.confirmed || !game.awayPitcher.confirmed
+  const awayTeam = getTeamDisplayName(game.awayTeam)
+  const homeTeam = getTeamDisplayName(game.homeTeam)
   const pct = formatPct(game.yrfiProbability, estimated)
   const odds = formatOddsDisplay(game.breakEvenOdds, estimated, settings.oddsFormat)
   const temp = formatTemp(game.weather, settings.tempUnit)
@@ -83,9 +86,9 @@ export default function GameRow({ game }: GameRowProps) {
       {/* Matchup — truncate prevents overflow */}
       <td className="px-4 py-3 align-middle font-medium">
         <span className="flex min-w-0 items-center gap-1 whitespace-nowrap">
-          <span className="truncate text-slate-500">{game.awayTeam}</span>
+          <span className="truncate text-slate-500">{awayTeam}</span>
           <span className="shrink-0 text-slate-300">@</span>
-          <span className="truncate">{game.homeTeam}</span>
+          <span className="truncate">{homeTeam}</span>
         </span>
       </td>
       {/* Away SP */}
