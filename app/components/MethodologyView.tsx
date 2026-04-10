@@ -1,3 +1,6 @@
+'use client'
+
+import { useEffect, useRef } from 'react'
 import { BlockMath, InlineMath } from 'react-katex'
 
 const lambdaMath = String.raw`\begin{aligned}
@@ -221,8 +224,10 @@ function FormulaBlock({
   className?: string
 }) {
   return (
-    <div className={`methodology-formula methodology-formula--${align} overflow-x-auto rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-slate-800 ${className}`}>
-      <BlockMath math={math} />
+    <div className={`methodology-formula methodology-formula--${align} overflow-hidden rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-slate-800 ${className}`}>
+      <ScaledMath align={align}>
+        <BlockMath math={math} />
+      </ScaledMath>
     </div>
   )
 }
@@ -240,8 +245,10 @@ function FactorTable({ factors }: {
         {factors.map(f => (
           <article key={f.name} className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm shadow-slate-200/40">
             <div className="text-sm font-semibold text-slate-800">{f.name}</div>
-            <div className="methodology-inline-formula mt-2 overflow-x-auto rounded-lg bg-slate-50 px-3 py-2 whitespace-nowrap text-slate-700">
-              <InlineMath math={f.formula} />
+            <div className="methodology-inline-formula mt-2 overflow-hidden rounded-lg bg-slate-50 px-3 py-2 text-slate-700">
+              <ScaledMath align="left">
+                <InlineMath math={f.formula} />
+              </ScaledMath>
             </div>
             <p className="mt-3 text-xs leading-relaxed text-slate-500">{f.description}</p>
             <div className="mt-3 text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-slate-400">{f.source}</div>
@@ -263,8 +270,10 @@ function FactorTable({ factors }: {
             <tr key={f.name} className={i % 2 === 0 ? 'bg-white' : 'bg-slate-50/50'}>
               <td className="px-4 py-3 font-medium text-slate-800 whitespace-nowrap align-top">{f.name}</td>
               <td className="px-4 py-3 align-top text-slate-600">
-                <div className="methodology-inline-formula overflow-x-auto whitespace-nowrap">
-                  <InlineMath math={f.formula} />
+                <div className="methodology-inline-formula overflow-hidden">
+                  <ScaledMath align="left">
+                    <InlineMath math={f.formula} />
+                  </ScaledMath>
                 </div>
               </td>
               <td className="px-4 py-3 text-slate-500 leading-relaxed align-top">{f.description}</td>
@@ -274,5 +283,59 @@ function FactorTable({ factors }: {
         </table>
       </div>
     </>
+  )
+}
+
+function ScaledMath({
+  children,
+  align = 'center',
+}: {
+  children: React.ReactNode
+  align?: 'left' | 'center'
+}) {
+  const containerRef = useRef<HTMLDivElement>(null)
+  const contentRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    function measure() {
+      const container = containerRef.current
+      const content = contentRef.current
+      if (!container || !content) return
+
+      const containerWidth = container.clientWidth
+      const contentWidth = content.scrollWidth
+      const contentHeight = content.offsetHeight
+      if (!containerWidth || !contentWidth || !contentHeight) return
+
+      const nextScale = Math.min(1, containerWidth / contentWidth)
+      content.style.setProperty('--scaled-math-scale', `${nextScale}`)
+      container.style.setProperty('--scaled-math-height', `${contentHeight * nextScale}px`)
+    }
+
+    measure()
+
+  const container = containerRef.current
+  const content = contentRef.current
+  if (!container || !content) return
+
+    const observer = new ResizeObserver(measure)
+    observer.observe(container)
+    observer.observe(content)
+
+    return () => observer.disconnect()
+  }, [children])
+
+  return (
+    <div
+      ref={containerRef}
+      className={`scaled-math-container w-full ${align === 'left' ? '' : 'flex justify-center'}`}
+    >
+      <div
+        ref={contentRef}
+        className={`scaled-math-content ${align === 'left' ? 'scaled-math-content--left' : 'scaled-math-content--center'}`}
+      >
+        {children}
+      </div>
+    </div>
   )
 }

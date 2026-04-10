@@ -21,9 +21,28 @@ html {
 }
 
 @layer components {
+  .scaled-math-container {
+    --scaled-math-height: auto;
+    height: var(--scaled-math-height);
+  }
+
+  .scaled-math-content {
+    --scaled-math-scale: 1;
+    width: max-content;
+    max-width: none;
+    transform: scale(var(--scaled-math-scale));
+  }
+
+  .scaled-math-content--left {
+    transform-origin: top left;
+  }
+
+  .scaled-math-content--center {
+    transform-origin: top center;
+  }
+
   .methodology-formula .katex-display {
     margin: 0;
-    min-width: max-content;
   }
 
   .methodology-formula--left .katex-display {
