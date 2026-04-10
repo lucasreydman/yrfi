@@ -64,32 +64,42 @@ function MobileCard({ game }: { game: GameResult }) {
       : `${game.weather.windSpeedMph} mph`
 
   return (
-    <div className="border-b border-slate-100 px-4 py-3">
-      <div className="flex items-center justify-between">
-        <div className="font-medium">
-          <span className="text-slate-500">{awayTeam}</span>
-          <span className="mx-1 text-slate-300">@</span>
-          <span>{homeTeam}</span>
+    <article className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm shadow-slate-200/50">
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <div className="text-[0.7rem] font-semibold uppercase tracking-[0.18em] text-slate-400">Matchup</div>
+          <div className="mt-1 flex min-w-0 items-center gap-1 text-base font-semibold text-slate-900">
+            <span className="truncate text-slate-500">{awayTeam}</span>
+            <span className="shrink-0 text-slate-300">@</span>
+            <span className="truncate">{homeTeam}</span>
+          </div>
         </div>
-        <div className="flex items-center gap-2">
-          <MobileResultBadge game={game} />
-          <div className={`text-lg font-bold tabular-nums ${yrfiColorClass}`}>
+        <div className="shrink-0 text-right">
+          <div className="text-[0.7rem] font-semibold uppercase tracking-[0.18em] text-slate-400">YRFI</div>
+          <div className={`mt-1 text-2xl font-bold tabular-nums ${yrfiColorClass}`}>
             {pct}
           </div>
         </div>
       </div>
-      <div className="mt-1 flex items-center justify-between text-sm text-slate-500">
-        <span>{game.awayPitcher.name} vs {game.homePitcher.name}</span>
-        <span className={estimated ? 'inline-flex min-w-[3ch] justify-center text-slate-300' : 'font-medium text-slate-700'}>{odds}</span>
+
+      <div className="mt-3 grid gap-2 text-sm text-slate-600">
+        <div className="flex items-center justify-between gap-3 rounded-xl bg-slate-50 px-3 py-2">
+          <span className="shrink-0 text-slate-400">Away SP</span>
+          <span className="min-w-0 truncate text-right font-medium text-slate-700">{game.awayPitcher.name}</span>
+        </div>
+        <div className="flex items-center justify-between gap-3 rounded-xl bg-slate-50 px-3 py-2">
+          <span className="shrink-0 text-slate-400">Home SP</span>
+          <span className="min-w-0 truncate text-right font-medium text-slate-700">{game.homePitcher.name}</span>
+        </div>
       </div>
-      <div className="mt-0.5 flex items-center gap-2 text-xs text-slate-400">
-        <span>{time}</span>
-        <span className="text-slate-200">·</span>
-        <span>{tempStr}</span>
-        <span className="text-slate-200">·</span>
-        <span>{windStr}</span>
+
+      <div className="mt-3 grid grid-cols-2 gap-2 text-xs">
+        <Metric label="Bet at" value={odds} valueClassName={estimated ? 'text-slate-300' : 'text-slate-700'} />
+        <Metric label="Result" value={<MobileResultBadge game={game} />} />
+        <Metric label="First pitch" value={time} />
+        <Metric label="Weather" value={`${tempStr} · ${windStr}`} />
       </div>
-    </div>
+    </article>
   )
 }
 
@@ -97,11 +107,11 @@ export default function GameTable({ games, label }: GameTableProps) {
   if (games.length === 0) return null
 
   return (
-    <section className="mb-8">
+    <section className="mb-6 sm:mb-8">
       <h2 className="mb-2 px-4 text-xs font-semibold uppercase tracking-wider text-slate-400">{label}</h2>
 
       {/* Mobile card list */}
-      <div className="sm:hidden rounded-xl border border-slate-200 bg-white overflow-hidden">
+      <div className="space-y-3 sm:hidden">
         {games.map(g => <MobileCard key={g.gamePk} game={g} />)}
       </div>
 
@@ -138,5 +148,22 @@ export default function GameTable({ games, label }: GameTableProps) {
         </table>
       </div>
     </section>
+  )
+}
+
+function Metric({
+  label,
+  value,
+  valueClassName = 'text-slate-700',
+}: {
+  label: string
+  value: React.ReactNode
+  valueClassName?: string
+}) {
+  return (
+    <div className="rounded-xl border border-slate-200 bg-white px-3 py-2.5">
+      <div className="text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-slate-400">{label}</div>
+      <div className={`mt-1 min-w-0 text-sm font-medium ${valueClassName}`}>{value}</div>
+    </div>
   )
 }

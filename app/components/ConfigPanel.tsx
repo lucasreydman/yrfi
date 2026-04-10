@@ -26,7 +26,7 @@ function SegmentRow({
   return (
     <div className="space-y-1.5">
       <span className="block text-xs font-medium text-slate-500">{label}</span>
-      <div className="flex w-full rounded-lg border border-slate-200 overflow-hidden text-xs font-medium">
+      <div className="flex w-full overflow-hidden rounded-lg border border-slate-200 text-xs font-medium">
         {options.map(opt => (
           <button
             key={opt.value}
@@ -73,11 +73,12 @@ export default function ConfigPanel() {
         aria-label="Preferences"
       >
         <GearIcon />
+        <span className="sm:hidden">Prefs</span>
         <span className="hidden sm:inline">Preferences</span>
       </button>
 
       {open && (
-        <div className="absolute right-0 top-full mt-2 z-50 w-64 rounded-2xl border border-slate-200 bg-white shadow-lg p-4 space-y-4">
+        <div className="absolute right-0 top-full z-50 mt-2 w-[min(18rem,calc(100vw-2rem))] max-h-[calc(100vh-6rem)] space-y-4 overflow-y-auto rounded-2xl border border-slate-200 bg-white p-4 shadow-lg sm:w-64">
           <p className="text-xs font-semibold uppercase tracking-wider text-slate-400">Preferences</p>
 
           <SegmentRow

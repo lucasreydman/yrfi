@@ -75,21 +75,21 @@ export default function ClientShell() {
     <SettingsProvider>
     <div className="mx-auto max-w-7xl">
       {/* Nav bar: date tabs + right-side actions */}
-      <div className="flex items-center justify-between px-4 h-14 border-b border-slate-100">
-        <div className="flex gap-2">
+      <div className="flex flex-col gap-3 border-b border-slate-100 px-4 py-3 sm:h-14 sm:flex-row sm:items-center sm:justify-between sm:gap-4 sm:py-0">
+        <div className="flex min-w-0 flex-1 gap-2">
           {tab === 'games' ? (
             <DatePicker date={date} onChange={d => { setDate(d); setData(null) }} />
           ) : (
             <button
               type="button"
               onClick={() => setTab('games')}
-              className="rounded-full px-4 py-1.5 text-sm font-medium bg-slate-100 text-slate-600 hover:bg-slate-200 transition-colors"
+              className="rounded-full bg-slate-100 px-4 py-1.5 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-200"
             >
               ← Back to games
             </button>
           )}
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center justify-end gap-2 sm:justify-normal">
           {tab === 'games' && <ConfigPanel />}
           <button
             type="button"
@@ -105,6 +105,7 @@ export default function ClientShell() {
               <line x1="12" y1="20" x2="12" y2="4" />
               <line x1="6" y1="20" x2="6" y2="14" />
             </svg>
+            <span className="sm:hidden">Model</span>
             <span className="hidden sm:inline">Methodology</span>
           </button>
         </div>

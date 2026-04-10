@@ -16,12 +16,12 @@ export default function DatePicker({ date, onChange }: DatePickerProps) {
   const tomorrowStr = tomorrow.toISOString().split('T')[0]
 
   return (
-    <div className="flex gap-2">
+    <div className="flex w-full flex-wrap gap-2 sm:w-auto sm:flex-nowrap">
       {[today, tomorrowStr].map(d => (
         <button
           key={d}
           onClick={() => onChange(d)}
-          className={`rounded-full px-4 py-1.5 text-sm font-medium transition-colors ${
+          className={`flex-1 rounded-full px-4 py-1.5 text-sm font-medium transition-colors sm:flex-none ${
             date === d
               ? 'bg-green-600 text-white'
               : 'bg-slate-100 text-slate-600 hover:bg-slate-200'

@@ -77,7 +77,7 @@ const factorRows = [
 
 export default function MethodologyView() {
   return (
-    <div className="mx-auto max-w-3xl px-4 py-8 text-sm text-slate-700">
+    <div className="mx-auto max-w-3xl px-4 py-6 text-sm text-slate-700 sm:py-8">
 
       {/* Intro */}
       <div className="mb-8">
@@ -235,8 +235,22 @@ function FactorTable({ factors }: {
   factors: ReadonlyArray<{ name: string; formula: string; description: string; source: string }>
 }) {
   return (
-    <div className="rounded-xl border border-slate-200 overflow-hidden">
-      <table className="w-full text-xs">
+    <>
+      <div className="space-y-3 sm:hidden">
+        {factors.map(f => (
+          <article key={f.name} className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm shadow-slate-200/40">
+            <div className="text-sm font-semibold text-slate-800">{f.name}</div>
+            <div className="methodology-inline-formula mt-2 overflow-x-auto rounded-lg bg-slate-50 px-3 py-2 whitespace-nowrap text-slate-700">
+              <InlineMath math={f.formula} />
+            </div>
+            <p className="mt-3 text-xs leading-relaxed text-slate-500">{f.description}</p>
+            <div className="mt-3 text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-slate-400">{f.source}</div>
+          </article>
+        ))}
+      </div>
+
+      <div className="hidden overflow-hidden rounded-xl border border-slate-200 sm:block">
+        <table className="w-full text-xs">
         <thead className="bg-slate-50 border-b border-slate-200">
           <tr>
             <th className="px-4 py-2 text-left font-semibold text-slate-500 uppercase tracking-wider w-[130px]">Factor</th>
@@ -257,7 +271,8 @@ function FactorTable({ factors }: {
             </tr>
           ))}
         </tbody>
-      </table>
-    </div>
+        </table>
+      </div>
+    </>
   )
 }
