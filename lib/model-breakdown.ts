@@ -34,6 +34,23 @@ function dir(m: number): 'up' | 'down' | 'neutral' {
   return 'neutral'
 }
 
+function impactDescription(
+  multiplier: number,
+  descriptions: {
+    strongDown: string
+    down: string
+    neutral: string
+    up: string
+    strongUp: string
+  },
+): string {
+  if (multiplier <= 0.94) return descriptions.strongDown
+  if (multiplier < 0.975) return descriptions.down
+  if (multiplier <= 1.025) return descriptions.neutral
+  if (multiplier < 1.06) return descriptions.up
+  return descriptions.strongUp
+}
+
 function badge(label: string, multiplier: number, description: string): FactorBadge {
   return { label, multiplier, direction: dir(multiplier), description }
 }
@@ -44,20 +61,29 @@ function pitcherFactors(p: PitcherStats): FactorBadge[] {
   const kM = Math.max(0.85, Math.min(1.15, rawK))
   const barrelM = Math.pow(p.barrelRate / LEAGUE_AVG_BARREL_PCT, 0.35)
 
-  const fipDesc =
-    p.fip < 3.40 ? 'elite — limits run events' :
-    p.fip > 4.30 ? 'hitter-friendly' :
-    'near average'
+  const fipDesc = impactDescription(fipM, {
+    strongDown: 'run-suppressing FIP',
+    down: 'slightly better than avg FIP',
+    neutral: 'near average',
+    up: 'slightly worse than avg FIP',
+    strongUp: 'hitter-friendly FIP',
+  })
 
-  const kDesc =
-    p.kPct > 0.27 ? 'high strikeout rate' :
-    p.kPct < 0.19 ? 'low strikeout rate' :
-    'average K rate'
+  const kDesc = impactDescription(kM, {
+    strongDown: 'high strikeout rate',
+    down: 'above-average K rate',
+    neutral: 'average K rate',
+    up: 'below-average K rate',
+    strongUp: 'low strikeout rate',
+  })
 
-  const barrelDesc =
-    p.barrelRate < 6.0 ? 'limits hard contact' :
-    p.barrelRate > 10.0 ? 'allows hard contact' :
-    'average barrel rate'
+  const barrelDesc = impactDescription(barrelM, {
+    strongDown: 'limits hard contact',
+    down: 'slightly suppresses barrels',
+    neutral: 'average barrel rate',
+    up: 'slightly elevated barrel rate',
+    strongUp: 'allows hard contact',
+  })
 
   return [
     badge('FIP', fipM, fipDesc),
@@ -71,19 +97,25 @@ function lineupFactors(
   topOfOrderOBP: number | null,
 ): FactorBadge[] {
   const obpM = Math.pow(teamOBP / LEAGUE_AVG_OBP, 0.70)
-  const obpDesc =
-    teamOBP > 0.330 ? 'strong lineup OBP' :
-    teamOBP < 0.295 ? 'weak lineup OBP' :
-    'average OBP'
+  const obpDesc = impactDescription(obpM, {
+    strongDown: 'weak lineup OBP',
+    down: 'slightly below-average OBP',
+    neutral: 'average OBP',
+    up: 'slightly above-average OBP',
+    strongUp: 'strong lineup OBP',
+  })
   const badges: FactorBadge[] = [badge('Team OBP', obpM, obpDesc)]
 
   if (topOfOrderOBP !== null && teamOBP > 0) {
     const ratio = Math.min(Math.max(topOfOrderOBP / teamOBP, 0.90), 1.12)
     const topM = Math.pow(ratio, 0.45)
-    const topDesc =
-      ratio > 1.04 ? 'strong top of order' :
-      ratio < 0.96 ? 'weak top of order' :
-      'average top of order'
+    const topDesc = impactDescription(topM, {
+      strongDown: 'weak top of order',
+      down: 'slightly below-average top of order',
+      neutral: 'average top of order',
+      up: 'slightly above-average top of order',
+      strongUp: 'strong top of order',
+    })
     badges.push(badge('Top of order', topM, topDesc))
   }
 
