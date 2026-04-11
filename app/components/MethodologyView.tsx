@@ -163,7 +163,7 @@ export default function MethodologyView() {
           <InlineMath math={String.raw`\lambda`} /> represents the expected number of runs scored by one team in the first inning.
           The model starts from a baseline of <InlineMath math="0.3371" /> for one team&apos;s half-inning.
           That neutral prior was recalibrated from every completed MLB regular-season game in the pitch-clock era
-          from 2023 through 2025: <InlineMath math="3575 / 7290 \approx 49.0\%" /> YRFI and <InlineMath math="51.0\%" /> NRFI.
+          from 2023 through 2025: <InlineMath math="3575 / 7290 \approx 49.05\%" /> YRFI and <InlineMath math="50.95\%" /> NRFI.
           The model then adjusts each half-inning baseline with seven stabilized inputs plus a lineup-aware top-of-order
           tweak when a confirmed batting order is posted.
         </p>
@@ -201,7 +201,7 @@ export default function MethodologyView() {
         <p className="mt-3 text-slate-500 text-xs leading-relaxed">
           This assumes independence between the two half-innings, which is a reasonable approximation
           since different batters face different pitchers. At league-average inputs both half-innings have
-          <InlineMath math={String.raw`\lambda = 0.3371`} />, which gives <InlineMath math={String.raw`P(\mathrm{YRFI}) = 1 - e^{-0.6742} \approx 49.0\%`} />.
+          <InlineMath math={String.raw`\lambda = 0.3371`} />, which gives <InlineMath math={String.raw`P(\mathrm{YRFI}) = 1 - e^{-0.6742} \approx 49.05\%`} />.
         </p>
       </Section>
 
