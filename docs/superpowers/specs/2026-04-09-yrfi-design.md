@@ -86,7 +86,7 @@ lib/
 ### λ (Expected First-Inning Runs) Per Half-Inning
 
 ```
-Base λ = 0.36  (calibrated to an observed MLB YRFI baseline around 51.4%)
+Base λ = 0.36 per team half-inning  (if both teams are at baseline, game-level YRFI is about 51.3% and NRFI is about 48.7%)
 
 Adjustments (stabilized and damped before being combined):
 
