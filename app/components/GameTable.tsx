@@ -95,6 +95,13 @@ function MobileCard({ game }: { game: GameResult }) {
           <div className="text-[0.7rem] font-semibold uppercase tracking-[0.18em] text-slate-400">YRFI</div>
           <div className={`mt-1 text-2xl font-bold tabular-nums ${yrfiColorClass}`}>
             {pct}
+            {game.lineupConfirmed && (
+              <span
+                title="Confirmed batting order (top 5) factored in"
+                className="ml-1 text-[11px] text-slate-400 select-none"
+                aria-label="Confirmed lineup"
+              >●</span>
+            )}
           </div>
         </div>
       </div>

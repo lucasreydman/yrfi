@@ -41,6 +41,7 @@ export interface GameResult {
   lambda: { home: number; away: number }
   yrfiProbability: number  // 0–1
   breakEvenOdds: number    // American odds integer (positive or negative)
+  lineupConfirmed: boolean // true when both teams' confirmed top-5 batting order is factored in
   weather: WeatherData
   firstInningResult: 'run' | 'no_run' | 'pending'
 }

@@ -150,6 +150,7 @@ export async function GET(req: NextRequest) {
         const lineupStats = lineupStatsMap.get(game.gamePk)
         const homeTopOfOrderOBP = lineupStats?.home.topOfOrderOBP ?? null
         const awayTopOfOrderOBP = lineupStats?.away.topOfOrderOBP ?? null
+        const lineupConfirmed = (lineupStats?.home.confirmed ?? false) && (lineupStats?.away.confirmed ?? false)
 
         const sharedEnv = {
           parkFactor,
@@ -205,6 +206,7 @@ export async function GET(req: NextRequest) {
           lambda: { home: lambdaHome, away: lambdaAway },
           yrfiProbability,
           breakEvenOdds: odds,
+          lineupConfirmed,
           weather,
           firstInningResult,
         }

@@ -161,7 +161,7 @@ export default function MethodologyView() {
       <Section title="Step 1 — Estimate λ (expected runs) for each half-inning">
         <p className="mb-3 leading-relaxed">
           <InlineMath math={String.raw`\lambda`} /> represents the expected number of runs scored by one team in the first inning.
-          The model starts from a baseline of <InlineMath math="0.3371" /> for one team&apos;s half-inning.
+          The model starts from a baseline of <InlineMath math="0.3371" />{' '}for one team&apos;s half-inning.
           That neutral prior was recalibrated from every completed MLB regular-season game in the pitch-clock era
           from 2023 through 2025: <InlineMath math="3575 / 7290 \approx 49.05\%" /> YRFI and <InlineMath math="50.95\%" /> NRFI.
           The model then adjusts each half-inning baseline with seven stabilized inputs plus a lineup-aware top-of-order
@@ -187,6 +187,9 @@ export default function MethodologyView() {
           baseline rather than treating every batting order as interchangeable.
           The raw adjustment is then bounded to keep the model in a realistic MLB range, and league-average
           values are only used when the starter identity or a required stat feed is actually missing.
+          When both teams&apos; confirmed batting orders are factored in, a small{' '}
+          <span className="text-[10px] text-slate-400 font-mono">●</span>
+          {' '}appears next to the YRFI percentage. No indicator means the number still uses season team OBP as the lineup proxy.
         </p>
       </Section>
 

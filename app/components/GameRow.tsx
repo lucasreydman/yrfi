@@ -103,6 +103,13 @@ export default function GameRow({ game }: GameRowProps) {
       {/* YRFI % */}
       <td className={`px-4 py-3 align-middle whitespace-nowrap tabular-nums font-semibold ${yrfiColorClass}`}>
         {pct}
+        {game.lineupConfirmed && (
+          <span
+            title="Confirmed batting order (top 5) factored in"
+            className="ml-1 text-[9px] text-slate-400 select-none"
+            aria-label="Confirmed lineup"
+          >●</span>
+        )}
       </td>
       {/* Bet at */}
       <td className={`px-4 py-3 align-middle whitespace-nowrap text-center text-sm tabular-nums ${showOddsUnavailable ? 'text-slate-300' : 'font-medium text-slate-700'}`}>
