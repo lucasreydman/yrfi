@@ -157,6 +157,11 @@ export default function ClientShell() {
 
           {!loading && !error && data && (
             <div className="px-4 py-6">
+              {data.games.length > 0 && (
+                <p className="mb-5 text-xs text-slate-400">
+                  Tap any matchup to see the full model breakdown — pitchers, lineups, park &amp; weather.
+                </p>
+              )}
               {data.games.length === 0 && (
                 <p className="text-center text-slate-400">No games scheduled for this date.</p>
               )}

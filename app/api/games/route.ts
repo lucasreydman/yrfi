@@ -19,7 +19,7 @@ import {
 import type { GameResult, GamesResponse, PitcherStats } from '@/lib/types'
 
 const RESPONSE_TTL_SECONDS = 300 // 5 minutes
-const RESPONSE_CACHE_VERSION = 'v2'
+const RESPONSE_CACHE_VERSION = 'v3'
 
 function getPacificDate(): string {
   return new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Los_Angeles' }).format(new Date())
@@ -203,10 +203,16 @@ export async function GET(req: NextRequest) {
           awayTeamId: game.teams.away.team.id,
           homeOBP,
           awayOBP,
+          topOfOrderOBP: { home: homeTopOfOrderOBP, away: awayTopOfOrderOBP },
+          parkFactor,
           lambda: { home: lambdaHome, away: lambdaAway },
           yrfiProbability,
           breakEvenOdds: odds,
           lineupConfirmed,
+          lineupDetails: {
+            home: lineupStats?.home.batters ?? [],
+            away: lineupStats?.away.batters ?? [],
+          },
           weather,
           firstInningResult,
         }

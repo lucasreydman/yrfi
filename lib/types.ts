@@ -24,6 +24,19 @@ export interface WeatherData {
   controlled: boolean      // true for roofed/retractable parks where weather is neutralized
 }
 
+export interface BatterRow {
+  name: string
+  battingSlot: number       // 1–5
+  obp: number               // raw season OBP
+  stabilizedObp: number     // shrinkage-adjusted value used in model
+  plateAppearances: number
+}
+
+export interface LineupDetails {
+  home: BatterRow[]
+  away: BatterRow[]
+}
+
 export interface GameResult {
   gamePk: number
   gameTime: string         // ISO string
@@ -38,10 +51,13 @@ export interface GameResult {
   awayTeamId: number
   homeOBP: number          // season team OBP
   awayOBP: number
+  topOfOrderOBP: { home: number | null; away: number | null }
+  parkFactor: number
   lambda: { home: number; away: number }
   yrfiProbability: number  // 0–1
   breakEvenOdds: number    // American odds integer (positive or negative)
   lineupConfirmed: boolean // true when both teams' confirmed top-5 batting order is factored in
+  lineupDetails: LineupDetails
   weather: WeatherData
   firstInningResult: 'run' | 'no_run' | 'pending'
 }

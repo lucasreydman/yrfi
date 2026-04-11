@@ -1,7 +1,9 @@
 'use client'
 
+import { useState } from 'react'
 import type { GameResult } from '@/lib/types'
 import GameRow from './GameRow'
+import MatchupDetail from './MatchupDetail'
 import { useSettings, resolveTimezone } from '@/app/context/SettingsContext'
 import { getTeamDisplayName } from '@/lib/team-names'
 import { getYrfiTextClass } from '@/lib/yrfi-color'
@@ -56,6 +58,7 @@ function PitcherRow({
 }
 
 function MobileCard({ game }: { game: GameResult }) {
+  const [expanded, setExpanded] = useState(false)
   const { settings } = useSettings()
   const showOddsUnavailable = !game.homePitcher.confirmed || !game.awayPitcher.confirmed
   const showEstimatePrefix = showOddsUnavailable || game.homePitcher.estimated || game.awayPitcher.estimated
@@ -81,42 +84,44 @@ function MobileCard({ game }: { game: GameResult }) {
   const weatherSummary = tempStr === 'Roof' && windStr === 'Roof' ? 'Roof' : `${tempStr} · ${windStr}`
 
   return (
-    <article className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm shadow-slate-200/50">
-      <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0">
-          <div className="text-[0.7rem] font-semibold uppercase tracking-[0.18em] text-slate-400">Matchup</div>
-          <div className="mt-1 flex min-w-0 items-center gap-1 text-base font-semibold text-slate-900">
-            <span className="truncate text-slate-500">{awayTeam}</span>
-            <span className="shrink-0 text-slate-300">@</span>
-            <span className="truncate">{homeTeam}</span>
+    <article
+      className="rounded-2xl border border-slate-200 bg-white shadow-sm shadow-slate-200/50 cursor-pointer select-none"
+      onClick={() => setExpanded(e => !e)}
+    >
+      <div className="p-4">
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <div className="text-[0.7rem] font-semibold uppercase tracking-[0.18em] text-slate-400">Matchup</div>
+            <div className="mt-1 flex min-w-0 items-center gap-1 text-base font-semibold text-slate-900">
+              <span className="truncate text-slate-500">{awayTeam}</span>
+              <span className="shrink-0 text-slate-300">@</span>
+              <span className="truncate">{homeTeam}</span>
+            </div>
+          </div>
+          <div className="shrink-0 text-right">
+            <div className="text-[0.7rem] font-semibold uppercase tracking-[0.18em] text-slate-400">YRFI</div>
+            <div className={`mt-1 text-2xl font-bold tabular-nums ${yrfiColorClass}`}>{pct}</div>
           </div>
         </div>
-        <div className="shrink-0 text-right">
-          <div className="text-[0.7rem] font-semibold uppercase tracking-[0.18em] text-slate-400">YRFI</div>
-          <div className={`mt-1 text-2xl font-bold tabular-nums ${yrfiColorClass}`}>
-            {pct}
-            {game.lineupConfirmed && (
-              <span
-                title="Confirmed batting order (top 5) factored in"
-                className="ml-1 text-[11px] text-slate-400 select-none"
-                aria-label="Confirmed lineup"
-              >●</span>
-            )}
-          </div>
+
+        <div className="mt-3 grid gap-2 text-sm text-slate-600">
+          <PitcherRow label="Away SP" pitcher={game.awayPitcher} />
+          <PitcherRow label="Home SP" pitcher={game.homePitcher} />
+        </div>
+
+        <div className="mt-3 grid grid-cols-2 gap-2 text-xs">
+          <Metric label="Bet at" value={odds} valueClassName={showOddsUnavailable ? 'text-slate-300' : 'text-slate-700'} />
+          <Metric label="Result" value={<MobileResultBadge game={game} />} />
+          <Metric label="First pitch" value={time} />
+          <Metric label="Weather" value={weatherSummary} />
         </div>
       </div>
 
-      <div className="mt-3 grid gap-2 text-sm text-slate-600">
-        <PitcherRow label="Away SP" pitcher={game.awayPitcher} />
-        <PitcherRow label="Home SP" pitcher={game.homePitcher} />
-      </div>
-
-      <div className="mt-3 grid grid-cols-2 gap-2 text-xs">
-        <Metric label="Bet at" value={odds} valueClassName={showOddsUnavailable ? 'text-slate-300' : 'text-slate-700'} />
-        <Metric label="Result" value={<MobileResultBadge game={game} />} />
-        <Metric label="First pitch" value={time} />
-        <Metric label="Weather" value={weatherSummary} />
-      </div>
+      {expanded && (
+        <div className="border-t border-slate-100 px-4 pb-4 pt-3" onClick={e => e.stopPropagation()}>
+          <MatchupDetail game={game} />
+        </div>
+      )}
     </article>
   )
 }

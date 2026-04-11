@@ -1,9 +1,11 @@
 'use client'
 
+import { useState } from 'react'
 import type { GameResult } from '@/lib/types'
 import { useSettings, resolveTimezone } from '@/app/context/SettingsContext'
 import { getTeamDisplayName } from '@/lib/team-names'
 import { getYrfiTextClass } from '@/lib/yrfi-color'
+import MatchupDetail from './MatchupDetail'
 
 interface GameRowProps {
   game: GameResult
@@ -70,6 +72,7 @@ function PitcherName({ pitcher }: { pitcher: GameResult['homePitcher'] }) {
 }
 
 export default function GameRow({ game }: GameRowProps) {
+  const [expanded, setExpanded] = useState(false)
   const { settings } = useSettings()
   const showOddsUnavailable = !game.homePitcher.confirmed || !game.awayPitcher.confirmed
   const showEstimatePrefix = showOddsUnavailable || game.homePitcher.estimated || game.awayPitcher.estimated
@@ -83,48 +86,54 @@ export default function GameRow({ game }: GameRowProps) {
   const yrfiColorClass = getYrfiTextClass(game.yrfiProbability)
 
   return (
-    <tr className="border-b border-slate-100 hover:bg-slate-50">
-      {/* Matchup — truncate prevents overflow */}
-      <td className="px-4 py-3 align-middle font-medium">
-        <span className="flex min-w-0 items-center gap-1 whitespace-nowrap">
-          <span className="truncate text-slate-500">{awayTeam}</span>
-          <span className="shrink-0 text-slate-300">@</span>
-          <span className="truncate">{homeTeam}</span>
-        </span>
-      </td>
-      {/* Away SP */}
-      <td className="px-4 py-3 align-middle text-sm text-slate-600">
-        <PitcherName pitcher={game.awayPitcher} />
-      </td>
-      {/* Home SP */}
-      <td className="px-4 py-3 align-middle text-sm text-slate-600">
-        <PitcherName pitcher={game.homePitcher} />
-      </td>
-      {/* YRFI % */}
-      <td className={`px-4 py-3 align-middle whitespace-nowrap tabular-nums font-semibold ${yrfiColorClass}`}>
-        {pct}
-        {game.lineupConfirmed && (
-          <span
-            title="Confirmed batting order (top 5) factored in"
-            className="ml-1 text-[9px] text-slate-400 select-none"
-            aria-label="Confirmed lineup"
-          >●</span>
-        )}
-      </td>
-      {/* Bet at */}
-      <td className={`px-4 py-3 align-middle whitespace-nowrap text-center text-sm tabular-nums ${showOddsUnavailable ? 'text-slate-300' : 'font-medium text-slate-700'}`}>
-        {odds}
-      </td>
-      {/* Temp */}
-      <td className="px-3 py-3 align-middle whitespace-nowrap text-center text-sm text-slate-500">{temp}</td>
-      {/* Wind */}
-      <td className="px-3 py-3 align-middle whitespace-nowrap text-center text-sm text-slate-500">{wind}</td>
-      {/* Time */}
-      <td className="px-3 py-3 align-middle whitespace-nowrap text-center text-sm text-slate-500">{time}</td>
-      {/* Result */}
-      <td className="px-2.5 py-3 align-middle whitespace-nowrap text-center">
-        <ResultBadge game={game} />
-      </td>
-    </tr>
+    <>
+      <tr
+        className="cursor-pointer border-b border-slate-100 hover:bg-slate-50 select-none"
+        onClick={() => setExpanded(e => !e)}
+      >
+        {/* Matchup */}
+        <td className="px-4 py-3 align-middle font-medium">
+          <span className="flex min-w-0 items-center gap-1 whitespace-nowrap">
+            <span className="truncate text-slate-500">{awayTeam}</span>
+            <span className="shrink-0 text-slate-300">@</span>
+            <span className="truncate">{homeTeam}</span>
+          </span>
+        </td>
+        {/* Away SP */}
+        <td className="px-4 py-3 align-middle text-sm text-slate-600">
+          <PitcherName pitcher={game.awayPitcher} />
+        </td>
+        {/* Home SP */}
+        <td className="px-4 py-3 align-middle text-sm text-slate-600">
+          <PitcherName pitcher={game.homePitcher} />
+        </td>
+        {/* YRFI % */}
+        <td className={`px-4 py-3 align-middle whitespace-nowrap tabular-nums font-semibold ${yrfiColorClass}`}>
+          {pct}
+        </td>
+        {/* Bet at */}
+        <td className={`px-4 py-3 align-middle whitespace-nowrap text-center text-sm tabular-nums ${showOddsUnavailable ? 'text-slate-300' : 'font-medium text-slate-700'}`}>
+          {odds}
+        </td>
+        {/* Temp */}
+        <td className="px-3 py-3 align-middle whitespace-nowrap text-center text-sm text-slate-500">{temp}</td>
+        {/* Wind */}
+        <td className="px-3 py-3 align-middle whitespace-nowrap text-center text-sm text-slate-500">{wind}</td>
+        {/* Time */}
+        <td className="px-3 py-3 align-middle whitespace-nowrap text-center text-sm text-slate-500">{time}</td>
+        {/* Result */}
+        <td className="px-2.5 py-3 align-middle whitespace-nowrap text-center">
+          <ResultBadge game={game} />
+        </td>
+      </tr>
+
+      {expanded && (
+        <tr>
+          <td colSpan={9} className="border-b border-slate-100 bg-slate-50/70 px-6 py-4">
+            <MatchupDetail game={game} />
+          </td>
+        </tr>
+      )}
+    </>
   )
 }

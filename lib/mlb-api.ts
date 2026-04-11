@@ -10,6 +10,7 @@ import {
   TEAM_OBP_STABILIZATION_PA,
   shrinkTowardAverage,
 } from './poisson'
+import type { BatterRow } from './types'
 
 const MLB_BASE = 'https://statsapi.mlb.com/api/v1'
 
@@ -82,6 +83,7 @@ export interface TeamLineupStats {
   topOfOrderOBP: number | null
   batterCount: number
   confirmed: boolean
+  batters: BatterRow[]
 }
 
 export interface GameLineupStats {
@@ -95,6 +97,7 @@ interface MlbPlayerBattingStats {
 }
 
 interface MlbGameFeedPlayer {
+  person?: { id: number; fullName: string }
   battingOrder?: string
   seasonStats?: {
     batting?: MlbPlayerBattingStats
@@ -238,7 +241,7 @@ export function extractTopOfOrderStats(
   date?: string,
 ): TeamLineupStats {
   if (!players) {
-    return { topOfOrderOBP: null, batterCount: 0, confirmed: false }
+    return { topOfOrderOBP: null, batterCount: 0, confirmed: false, batters: [] }
   }
 
   const orderedHitters = Object.values(players)
@@ -247,7 +250,7 @@ export function extractTopOfOrderStats(
     .slice(0, TOP_OF_ORDER_BATTER_WEIGHTS.length)
 
   if (orderedHitters.length < 3) {
-    return { topOfOrderOBP: null, batterCount: orderedHitters.length, confirmed: false }
+    return { topOfOrderOBP: null, batterCount: orderedHitters.length, confirmed: false, batters: [] }
   }
 
   const stabilizationSample = dateAdjustedStabilizationSample(TOP_OF_ORDER_OBP_STABILIZATION_PA, date)
@@ -255,6 +258,7 @@ export function extractTopOfOrderStats(
   let weightedSum = 0
   let totalWeight = 0
   let validCount = 0
+  const batters: BatterRow[] = []
 
   for (let i = 0; i < orderedHitters.length; i++) {
     const player = orderedHitters[i]
@@ -268,16 +272,25 @@ export function extractTopOfOrderStats(
     weightedSum += stabilizedObp * weight
     totalWeight += weight
     validCount++
+
+    batters.push({
+      name: player.person?.fullName ?? `Batter ${i + 1}`,
+      battingSlot: i + 1,
+      obp: rawObp,
+      stabilizedObp,
+      plateAppearances,
+    })
   }
 
   if (validCount < 3 || totalWeight === 0) {
-    return { topOfOrderOBP: null, batterCount: validCount, confirmed: false }
+    return { topOfOrderOBP: null, batterCount: validCount, confirmed: false, batters: [] }
   }
 
   return {
     topOfOrderOBP: weightedSum / totalWeight,
     batterCount: validCount,
     confirmed: true,
+    batters,
   }
 }
 
@@ -286,8 +299,8 @@ export async function fetchGameLineupStats(gamePk: number, date?: string): Promi
   const res = await fetch(url, { cache: 'no-store' })
   if (!res.ok) {
     return {
-      home: { topOfOrderOBP: null, batterCount: 0, confirmed: false },
-      away: { topOfOrderOBP: null, batterCount: 0, confirmed: false },
+      home: { topOfOrderOBP: null, batterCount: 0, confirmed: false, batters: [] },
+      away: { topOfOrderOBP: null, batterCount: 0, confirmed: false, batters: [] },
     }
   }
 
