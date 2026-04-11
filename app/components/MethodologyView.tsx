@@ -213,9 +213,8 @@ export default function MethodologyView() {
         <p className="mt-3 text-slate-500 text-xs leading-relaxed">
           The ceiling function is used instead of rounding so the threshold is always conservative,
           you need odds <em>at least</em> this good, not just approximately this good.
-          A <Mono>~</Mono> prefix now means one or both probable starters are still TBD.
-          When a named starter is posted but some pitcher inputs had to fall back to league-average values,
-          the UI keeps the normal YRFI and odds display and instead shows a <Mono>Limited data</Mono> badge next to the affected pitcher.
+          A <Mono>~</Mono> prefix means one or both probable starters are still TBD, or a named starter still relies on fallback pitcher inputs.
+          Odds stay visible unless a probable starter is still TBD.
         </p>
       </Section>
 
@@ -287,9 +286,8 @@ function OddsFormulaBlock({ math, className = '' }: { math: string; className?: 
   return (
     <div className={`rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-slate-800 ${className}`}>
       <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:gap-4">
-        <div className="text-[0.65rem] font-semibold uppercase tracking-[0.14em] text-slate-500 sm:w-24 sm:pt-2">
-          <div>Break-even</div>
-          <div>odds</div>
+        <div className="shrink-0 whitespace-nowrap text-[0.65rem] font-semibold uppercase tracking-[0.14em] text-slate-500 sm:w-28 sm:pt-2">
+          Break-even odds
         </div>
         <div className="methodology-formula methodology-formula--left methodology-formula--odds min-w-0 flex-1 overflow-hidden text-slate-800">
           <BlockMath math={math} />

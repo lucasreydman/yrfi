@@ -4,7 +4,7 @@ import './globals.css'
 import { SITE_NAME, getSiteUrl } from '@/lib/site'
 
 const geist = Geist({ subsets: ['latin'] })
-const metadataTitle = 'bet-yrfi: Model-driven MLB first-inning edge'
+const metadataTitle = SITE_NAME
 const metadataDescription = 'Find the minimum odds you need to bet YRFI with a statistical edge. Model-driven, updated daily.'
 const ogImageUrl = `${getSiteUrl()}/yrfi-opengraph.png`
 

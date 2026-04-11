@@ -38,14 +38,6 @@ function MobileResultBadge({ game }: { game: GameResult }) {
   return <span className="text-slate-300 text-sm">—</span>
 }
 
-function LimitedDataBadge() {
-  return (
-    <span className="inline-flex items-center rounded-full bg-amber-50 px-2 py-0.5 text-[11px] font-semibold text-amber-700 ring-1 ring-inset ring-amber-200">
-      Limited data
-    </span>
-  )
-}
-
 function PitcherRow({
   label,
   pitcher,
@@ -53,14 +45,11 @@ function PitcherRow({
   label: string
   pitcher: GameResult['homePitcher']
 }) {
-  const showLimitedData = pitcher.confirmed && pitcher.estimated
-
   return (
     <div className="flex items-center justify-between gap-3 rounded-xl bg-slate-50 px-3 py-2">
       <span className="shrink-0 text-slate-400">{label}</span>
-      <span className="flex min-w-0 flex-col items-end gap-1 text-right font-medium text-slate-700">
-        <span className="w-full truncate">{pitcher.name}</span>
-        {showLimitedData ? <LimitedDataBadge /> : null}
+      <span className="min-w-0 text-right font-medium text-slate-700">
+        <span className="block w-full truncate">{pitcher.name}</span>
       </span>
     </div>
   )
@@ -68,11 +57,12 @@ function PitcherRow({
 
 function MobileCard({ game }: { game: GameResult }) {
   const { settings } = useSettings()
-  const showEstimatePrefix = !game.homePitcher.confirmed || !game.awayPitcher.confirmed
+  const showOddsUnavailable = !game.homePitcher.confirmed || !game.awayPitcher.confirmed
+  const showEstimatePrefix = showOddsUnavailable || game.homePitcher.estimated || game.awayPitcher.estimated
   const awayTeam = getTeamDisplayName(game.awayTeam)
   const homeTeam = getTeamDisplayName(game.homeTeam)
   const pct = `${showEstimatePrefix ? '~' : ''}${(game.yrfiProbability * 100).toFixed(1)}%`
-  const odds = showEstimatePrefix ? '—' : formatOddsDisplay(game.breakEvenOdds, settings.oddsFormat)
+  const odds = showOddsUnavailable ? '—' : formatOddsDisplay(game.breakEvenOdds, settings.oddsFormat)
   const time = new Date(game.gameTime).toLocaleTimeString([], {
     hour: 'numeric',
     minute: '2-digit',
@@ -115,7 +105,7 @@ function MobileCard({ game }: { game: GameResult }) {
       </div>
 
       <div className="mt-3 grid grid-cols-2 gap-2 text-xs">
-        <Metric label="Bet at" value={odds} valueClassName={showEstimatePrefix ? 'text-slate-300' : 'text-slate-700'} />
+        <Metric label="Bet at" value={odds} valueClassName={showOddsUnavailable ? 'text-slate-300' : 'text-slate-700'} />
         <Metric label="Result" value={<MobileResultBadge game={game} />} />
         <Metric label="First pitch" value={time} />
         <Metric label="Weather" value={weatherSummary} />

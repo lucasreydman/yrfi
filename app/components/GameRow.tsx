@@ -65,32 +65,18 @@ function ResultBadge({ game }: { game: GameResult }) {
   return <span className="inline-flex w-full justify-center text-slate-300">—</span>
 }
 
-function LimitedDataBadge() {
-  return (
-    <span className="inline-flex items-center rounded-full bg-amber-50 px-2 py-0.5 text-[11px] font-semibold text-amber-700 ring-1 ring-inset ring-amber-200">
-      Limited data
-    </span>
-  )
-}
-
 function PitcherName({ pitcher }: { pitcher: GameResult['homePitcher'] }) {
-  const showLimitedData = pitcher.confirmed && pitcher.estimated
-
-  return (
-    <span className="flex min-w-0 flex-col items-start gap-1">
-      <span className="block max-w-full truncate whitespace-nowrap">{pitcher.name}</span>
-      {showLimitedData ? <LimitedDataBadge /> : null}
-    </span>
-  )
+  return <span className="block max-w-full truncate whitespace-nowrap">{pitcher.name}</span>
 }
 
 export default function GameRow({ game }: GameRowProps) {
   const { settings } = useSettings()
-  const showEstimatePrefix = !game.homePitcher.confirmed || !game.awayPitcher.confirmed
+  const showOddsUnavailable = !game.homePitcher.confirmed || !game.awayPitcher.confirmed
+  const showEstimatePrefix = showOddsUnavailable || game.homePitcher.estimated || game.awayPitcher.estimated
   const awayTeam = getTeamDisplayName(game.awayTeam)
   const homeTeam = getTeamDisplayName(game.homeTeam)
   const pct = formatPct(game.yrfiProbability, showEstimatePrefix)
-  const odds = showEstimatePrefix ? '—' : formatOddsDisplay(game.breakEvenOdds, settings.oddsFormat)
+  const odds = showOddsUnavailable ? '—' : formatOddsDisplay(game.breakEvenOdds, settings.oddsFormat)
   const temp = formatTemp(game.weather, settings.tempUnit)
   const wind = formatWind(game.weather, settings.windUnit)
   const time = formatTime(game.gameTime, resolveTimezone(settings.timezone))
@@ -119,7 +105,7 @@ export default function GameRow({ game }: GameRowProps) {
         {pct}
       </td>
       {/* Bet at */}
-      <td className={`px-4 py-3 align-middle whitespace-nowrap text-center text-sm tabular-nums ${showEstimatePrefix ? 'text-slate-300' : 'font-medium text-slate-700'}`}>
+      <td className={`px-4 py-3 align-middle whitespace-nowrap text-center text-sm tabular-nums ${showOddsUnavailable ? 'text-slate-300' : 'font-medium text-slate-700'}`}>
         {odds}
       </td>
       {/* Temp */}
