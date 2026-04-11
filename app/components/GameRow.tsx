@@ -10,7 +10,7 @@ interface GameRowProps {
 }
 
 function formatPct(p: number, showEstimatePrefix: boolean): string {
-  return `${showEstimatePrefix ? '~' : ''}${(p * 100).toFixed(1)}%`
+  return `${showEstimatePrefix ? '~' : ''}${(p * 100).toFixed(2)}%`
 }
 
 function formatTime(iso: string, timezone: string): string {

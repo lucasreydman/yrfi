@@ -61,7 +61,7 @@ function MobileCard({ game }: { game: GameResult }) {
   const showEstimatePrefix = showOddsUnavailable || game.homePitcher.estimated || game.awayPitcher.estimated
   const awayTeam = getTeamDisplayName(game.awayTeam)
   const homeTeam = getTeamDisplayName(game.homeTeam)
-  const pct = `${showEstimatePrefix ? '~' : ''}${(game.yrfiProbability * 100).toFixed(1)}%`
+  const pct = `${showEstimatePrefix ? '~' : ''}${(game.yrfiProbability * 100).toFixed(2)}%`
   const odds = showOddsUnavailable ? '—' : formatOddsDisplay(game.breakEvenOdds, settings.oddsFormat)
   const time = new Date(game.gameTime).toLocaleTimeString([], {
     hour: 'numeric',

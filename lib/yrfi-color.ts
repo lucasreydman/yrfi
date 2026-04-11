@@ -5,8 +5,8 @@
 //
 // Color scale: red (weak bet) → yellow (near average) → green (strong bet)
 // Same gradient direction as NRFI: higher probability = greener = bet it.
-const MIN_REALISTIC_YRFI = 0.37
-const MAX_REALISTIC_YRFI = 0.62
+const MIN_REALISTIC_YRFI = 0.44
+const MAX_REALISTIC_YRFI = 0.60
 
 // 9-stop gradient: hsl(0) red → hsl(140) green, uniform hue steps
 const YRFI_COLOR_CLASSES = [
