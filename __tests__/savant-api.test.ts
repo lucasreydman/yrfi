@@ -48,4 +48,54 @@ describe('getSavantStats', () => {
     expect(result.barrelRate).toBeGreaterThan(LEAGUE_AVG_BARREL_PCT)
     expect(result.barrelRate).toBeLessThan(15)
   })
+
+  it('treats malformed cached entries as fallback data', () => {
+    const store = {
+      '123': {
+        playerId: 123,
+        barrelRate: null,
+        hardHitRate: null,
+        inningsPitched: 0,
+      },
+    } as never
+
+    const stats = getSavantStats(123, store, '2026-04-11')
+
+    expect(stats).toMatchObject({
+      barrelRate: 8,
+      hardHitRate: 38,
+      inningsPitched: 0,
+      usedFallback: true,
+    })
+  })
+
+  it('parses current Savant CSV fields into usable stats', () => {
+    const csv = [
+      '"last_name, first_name",player_id,attempts,ev95percent,brl_percent,brl_pa',
+      '"Valdez, Framber",664285,60,36.7,1.7,1.3',
+    ].join('\n')
+
+    const store = parseSavantCsv(csv)
+    const stats = getSavantStats(664285, store, '2026-04-11')
+
+    expect(store['664285']).toMatchObject({
+      playerId: 664285,
+      barrelRate: 1.7,
+      hardHitRate: 36.7,
+      inningsPitched: 20,
+    })
+    expect(stats.usedFallback).toBe(false)
+    expect(stats.barrelRate).toBeLessThan(8)
+  })
+
+  it('skips rows with invalid numeric fields during CSV parsing', () => {
+    const csv = [
+      '"last_name, first_name",player_id,attempts,ev95percent,brl_percent,brl_pa',
+      '"Broken, Pitcher",999,not-a-number,36.7,1.7,1.3',
+    ].join('\n')
+
+    const store = parseSavantCsv(csv)
+
+    expect(store['999']).toBeUndefined()
+  })
 })

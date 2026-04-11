@@ -10,8 +10,37 @@ import {
 } from './poisson'
 
 const KV_TTL_SECONDS = 12 * 60 * 60 // 12 hours
-const SAVANT_CACHE_VERSION = 'v2'
+const SAVANT_CACHE_VERSION = 'v3'
 const MIN_REASONABLE_SAVANT_ROWS = 300
+const MIN_VALID_SAVANT_ROWS = 100
+
+function isFiniteStat(value: unknown): value is number {
+  return typeof value === 'number' && Number.isFinite(value)
+}
+
+function isValidSavantEntry(entry: Partial<SavantStats> | undefined): entry is SavantStats {
+  return Boolean(
+    entry
+    && isFiniteStat(entry.playerId)
+    && isFiniteStat(entry.barrelRate)
+    && isFiniteStat(entry.hardHitRate)
+    && isFiniteStat(entry.inningsPitched)
+    && entry.inningsPitched > 0
+  )
+}
+
+function hasEnoughValidRows(store: SavantStore): boolean {
+  let validRows = 0
+
+  for (const entry of Object.values(store)) {
+    if (isValidSavantEntry(entry)) {
+      validRows += 1
+      if (validRows >= MIN_VALID_SAVANT_ROWS) return true
+    }
+  }
+
+  return false
+}
 
 function savantKey(year: number): string {
   return `savant-pitchers:${SAVANT_CACHE_VERSION}:${year}`
@@ -29,15 +58,27 @@ export function parseSavantCsv(csv: string): SavantStore {
   const store: SavantStore = {}
 
   for (const row of data) {
-    const ip = parseIP(row['p_formatted_ip'] ?? '0')
-
     const playerId = parseInt(row['player_id'], 10)
     if (isNaN(playerId)) continue
 
+    const barrelRate = parseFloat(
+      row['barrel_batted_rate'] ?? row['brl_percent'] ?? '0'
+    )
+    const hardHitRate = parseFloat(
+      row['hard_hit_percent'] ?? row['ev95percent'] ?? '0'
+    )
+    const ip = row['p_formatted_ip']
+      ? parseIP(row['p_formatted_ip'])
+      : parseFloat(row['attempts'] ?? '0') / 3
+
+    if (!Number.isFinite(barrelRate) || !Number.isFinite(hardHitRate) || !Number.isFinite(ip) || ip <= 0) {
+      continue
+    }
+
     store[String(playerId)] = {
       playerId,
-      barrelRate: parseFloat(row['barrel_batted_rate'] ?? '0'),
-      hardHitRate: parseFloat(row['hard_hit_percent'] ?? '0'),
+      barrelRate,
+      hardHitRate,
       inningsPitched: ip,
     }
   }
@@ -51,7 +92,7 @@ export function getSavantStats(
   date?: string,
 ): Pick<SavantStats, 'barrelRate' | 'hardHitRate' | 'inningsPitched'> & { usedFallback: boolean } {
   const entry = store[String(playerId)]
-  if (!entry) {
+  if (!isValidSavantEntry(entry)) {
     return {
       barrelRate: LEAGUE_AVG_BARREL_PCT,
       hardHitRate: LEAGUE_AVG_HARD_HIT_PCT,
@@ -79,10 +120,20 @@ async function fetchSavantCsv(year: number): Promise<string> {
 
 export async function loadSavantStore(year: number): Promise<SavantStore> {
   const cached = await kvGet<SavantStore>(savantKey(year))
-  if (cached && Object.keys(cached).length >= MIN_REASONABLE_SAVANT_ROWS) return cached
+  if (cached && Object.keys(cached).length >= MIN_REASONABLE_SAVANT_ROWS && hasEnoughValidRows(cached)) {
+    return cached
+  }
 
-  const csv = await fetchSavantCsv(year)
-  const store = parseSavantCsv(csv)
-  await kvSet(savantKey(year), store, KV_TTL_SECONDS)
-  return store
+  try {
+    const csv = await fetchSavantCsv(year)
+    const store = parseSavantCsv(csv)
+    if (Object.keys(store).length >= MIN_REASONABLE_SAVANT_ROWS && hasEnoughValidRows(store)) {
+      await kvSet(savantKey(year), store, KV_TTL_SECONDS)
+      return store
+    }
+
+    return {}
+  } catch {
+    return {}
+  }
 }
