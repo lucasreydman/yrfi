@@ -6,7 +6,7 @@ const LEAGUE_AVG_FIP = 3.8
 const LEAGUE_AVG_K_PCT = 0.23
 const LEAGUE_AVG_BARREL_PCT = 8.0
 const LEAGUE_AVG_OBP = 0.31
-const BASE_LAMBDA = 0.36
+const BASE_LAMBDA = 0.3371
 const FIP_CONSTANT = 3.1
 const PITCHER_FIP_STABILIZATION_IP = 45
 const PITCHER_K_STABILIZATION_BF = 150
@@ -14,6 +14,17 @@ const TEAM_OBP_STABILIZATION_PA = 600
 const SAVANT_STABILIZATION_IP = 50
 const TOP_OF_ORDER_OBP_STABILIZATION_PA = 180
 const RESPONSE_DELAY_MS = 0
+const EXCLUDED_DETAILED_STATES = new Set(['Postponed', 'Cancelled', 'Suspended'])
+const EXCLUDED_SERIES_DESCRIPTIONS = new Set([
+  'MLB All-Star Game',
+  'AL Wild Card Series',
+  'NL Wild Card Series',
+  'AL Division Series',
+  'NL Division Series',
+  'AL Championship Series',
+  'NL Championship Series',
+  'World Series',
+])
 
 const FIP_FACTOR_WEIGHT = 0.55
 const BARREL_FACTOR_WEIGHT = 0.35
@@ -23,7 +34,8 @@ const PARK_FACTOR_WEIGHT = 0.5
 const WEATHER_FACTOR_WEIGHT = 0.5
 const MIN_ADJUSTMENT_FACTOR = 0.55
 const MAX_ADJUSTMENT_FACTOR = 1.55
-const BACKTEST_CACHE_VERSION = 'v2'
+const BACKTEST_CACHE_VERSION = 'v4'
+const MAX_FETCH_RETRIES = 5
 
 const PARK_FACTORS = {
   1: 0.97, 2: 0.97, 3: 1.02, 4: 0.96, 5: 0.97, 7: 1.0, 10: 0.97, 12: 0.96,
@@ -205,28 +217,98 @@ function getParkFactor(venueId) {
   return PARK_FACTORS[venueId] ?? 1.0
 }
 
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms))
+}
+
 async function fetchJson(url) {
-  const res = await fetch(url)
-  if (!res.ok) {
+  for (let attempt = 0; attempt <= MAX_FETCH_RETRIES; attempt += 1) {
+    const res = await fetch(url)
+    if (res.ok) {
+      return res.json()
+    }
+
+    if (res.status === 429 && attempt < MAX_FETCH_RETRIES) {
+      const retryAfterHeader = res.headers.get('retry-after')
+      const retryAfterSeconds = retryAfterHeader ? Number.parseFloat(retryAfterHeader) : Number.NaN
+      const backoffMs = Number.isFinite(retryAfterSeconds)
+        ? retryAfterSeconds * 1000
+        : 1000 * 2 ** attempt
+      await sleep(backoffMs)
+      continue
+    }
+
     throw new Error(`Request failed (${res.status}): ${url}`)
   }
-  return res.json()
+
+  throw new Error(`Request failed after retries: ${url}`)
 }
 
 async function fetchText(url) {
-  const res = await fetch(url)
-  if (!res.ok) {
+  for (let attempt = 0; attempt <= MAX_FETCH_RETRIES; attempt += 1) {
+    const res = await fetch(url)
+    if (res.ok) {
+      return res.text()
+    }
+
+    if (res.status === 429 && attempt < MAX_FETCH_RETRIES) {
+      const retryAfterHeader = res.headers.get('retry-after')
+      const retryAfterSeconds = retryAfterHeader ? Number.parseFloat(retryAfterHeader) : Number.NaN
+      const backoffMs = Number.isFinite(retryAfterSeconds)
+        ? retryAfterSeconds * 1000
+        : 1000 * 2 ** attempt
+      await sleep(backoffMs)
+      continue
+    }
+
     throw new Error(`Request failed (${res.status}): ${url}`)
   }
-  return res.text()
+
+  throw new Error(`Request failed after retries: ${url}`)
 }
 
 async function fetchSchedule(date) {
   const url = `https://statsapi.mlb.com/api/v1/schedule?sportId=1&date=${date}&hydrate=probablePitcher,lineups`
   const data = await fetchJson(url)
-  return (data.dates?.[0]?.games ?? []).filter(
-    game => game.gameType === 'R' && !['Postponed', 'Cancelled', 'Suspended'].includes(game.status.detailedState)
-  )
+  return (data.dates?.[0]?.games ?? []).filter(isEligibleRegularSeasonGame)
+}
+
+function isEligibleRegularSeasonGame(game) {
+  if (game.gameType !== 'R') return false
+  if (EXCLUDED_DETAILED_STATES.has(game.status?.detailedState)) return false
+  if (EXCLUDED_SERIES_DESCRIPTIONS.has(game.seriesDescription)) return false
+  return game.seriesDescription === 'Regular Season'
+}
+
+async function fetchSeasonScheduleMap(startDate, endDate) {
+  const url = `https://statsapi.mlb.com/api/v1/schedule?sportId=1&startDate=${startDate}&endDate=${endDate}&hydrate=probablePitcher,lineups`
+  const data = await fetchJson(url)
+  const scheduleByDate = new Map()
+
+  for (const dateEntry of data.dates ?? []) {
+    const games = (dateEntry.games ?? []).filter(isEligibleRegularSeasonGame)
+    if (games.length > 0) {
+      scheduleByDate.set(dateEntry.date, games)
+    }
+  }
+
+  return scheduleByDate
+}
+
+function getSeasonBounds(startArg, endArg) {
+  const startYear = Number.parseInt(startArg.slice(0, 4), 10)
+  const endYear = Number.parseInt(endArg.slice(0, 4), 10)
+  const bounds = []
+
+  for (let year = startYear; year <= endYear; year += 1) {
+    bounds.push({
+      year,
+      startDate: year === startYear ? startArg : `${year}-01-01`,
+      endDate: year === endYear ? endArg : `${year}-12-31`,
+    })
+  }
+
+  return bounds
 }
 
 async function loadSavantStore(year) {
@@ -384,7 +466,12 @@ async function fetchWeather(venueId, gameTimeIso) {
 
 async function fetchLinescore(gamePk) {
   const data = await fetchJson(`https://statsapi.mlb.com/api/v1/game/${gamePk}/linescore`)
-  return data.innings?.[0] ?? null
+  if (data.innings?.[0]) {
+    return data.innings[0]
+  }
+
+  const liveData = await fetchJson(`https://statsapi.mlb.com/api/v1.1/game/${gamePk}/feed/live`)
+  return liveData.liveData?.linescore?.innings?.[0] ?? null
 }
 
 function getActualYrfi(firstInning) {
@@ -397,6 +484,10 @@ function getActualYrfi(firstInning) {
 
 function formatPct(value) {
   return `${(value * 100).toFixed(1)}%`
+}
+
+function computeNeutralLambdaFromYrfiRate(yrfiRate) {
+  return -Math.log(1 - yrfiRate) / 2
 }
 
 function buildCheckpointPath(cacheDir, date) {
@@ -441,23 +532,27 @@ async function run() {
   const args = process.argv.slice(2)
   const compareMode = args.includes('--compare')
   const compareTapersMode = args.includes('--compare-tapers')
+  const actualOnlyMode = args.includes('--actual-only')
   const resumeMode = !args.includes('--no-resume')
   const positionalArgs = args.filter(arg => arg !== '--compare')
     .filter(arg => arg !== '--compare-tapers')
+    .filter(arg => arg !== '--actual-only')
     .filter(arg => arg !== '--no-resume')
   const [startArg, endArg] = positionalArgs
   if (!startArg || !endArg) {
-    console.error('Usage: npm run backtest -- YYYY-MM-DD YYYY-MM-DD [--compare] [--compare-tapers] [--no-resume]')
+    console.error('Usage: npm run backtest -- YYYY-MM-DD YYYY-MM-DD [--compare] [--compare-tapers] [--actual-only] [--no-resume]')
     process.exit(1)
   }
 
-  const runMode = compareTapersMode ? 'compare-tapers' : compareMode ? 'compare' : 'single'
+  const runMode = actualOnlyMode ? 'actual-only' : compareTapersMode ? 'compare-tapers' : compareMode ? 'compare' : 'single'
   const cacheDir = path.join(process.cwd(), '.backtest-cache', BACKTEST_CACHE_VERSION, `${startArg}_${endArg}_${runMode}`)
   if (resumeMode) {
     await ensureCacheDir(cacheDir)
   }
 
   const dates = dateRange(startArg, endArg)
+  const seasonScheduleMaps = new Map()
+  const seasonBounds = getSeasonBounds(startArg, endArg)
   const savantStores = new Map()
   const pitcherCache = new Map()
   const teamCache = new Map()
@@ -466,6 +561,11 @@ async function run() {
   const predictions = []
   const legacyPredictions = []
   const infoPredictions = []
+  const seenGamePks = new Set()
+
+  for (const { year, startDate, endDate } of seasonBounds) {
+    seasonScheduleMaps.set(year, await fetchSeasonScheduleMap(startDate, endDate))
+  }
 
   for (const date of dates) {
     console.log(`Backtesting ${date}...`)
@@ -476,6 +576,15 @@ async function run() {
         predictions.push(...(cached.predictions ?? []))
         legacyPredictions.push(...(cached.legacyPredictions ?? []))
         infoPredictions.push(...(cached.infoPredictions ?? []))
+        for (const row of cached.predictions ?? []) {
+          if (typeof row.gamePk === 'number') seenGamePks.add(row.gamePk)
+        }
+        for (const row of cached.legacyPredictions ?? []) {
+          if (typeof row.gamePk === 'number') seenGamePks.add(row.gamePk)
+        }
+        for (const row of cached.infoPredictions ?? []) {
+          if (typeof row.gamePk === 'number') seenGamePks.add(row.gamePk)
+        }
         console.log(`Resumed ${date} from checkpoint.`)
         continue
       }
@@ -486,12 +595,42 @@ async function run() {
       savantStores.set(season, await loadSavantStore(season))
     }
     const savantStore = savantStores.get(season)
-    const games = await fetchSchedule(date)
+    const games = seasonScheduleMaps.get(season)?.get(date) ?? []
     const datePredictions = []
     const dateLegacyPredictions = []
     const dateInfoPredictions = []
 
+    if (actualOnlyMode) {
+      await mapWithConcurrency(games, 8, async game => {
+        if (seenGamePks.has(game.gamePk)) return
+
+        const actual = getActualYrfi(await fetchLinescore(game.gamePk))
+        if (actual === null) return
+
+        const predictionRow = {
+          gamePk: game.gamePk,
+          date,
+          actual,
+        }
+        seenGamePks.add(game.gamePk)
+        predictions.push(predictionRow)
+        datePredictions.push(predictionRow)
+      })
+
+      if (resumeMode) {
+        await writeCheckpoint(cacheDir, date, {
+          predictions: datePredictions,
+          legacyPredictions: [],
+          infoPredictions: [],
+        })
+      }
+
+      continue
+    }
+
     await mapWithConcurrency(games, 4, async game => {
+      if (seenGamePks.has(game.gamePk)) return
+
       const homePitcherId = game.teams.home.probablePitcher?.id
       const awayPitcherId = game.teams.away.probablePitcher?.id
       if (!homePitcherId || !awayPitcherId) return
@@ -585,10 +724,12 @@ async function run() {
       if (actual === null) return
 
       const predictionRow = {
+        gamePk: game.gamePk,
         date,
         prediction: computeYrfiProbability(lambdaHome, lambdaAway),
         actual,
       }
+      seenGamePks.add(game.gamePk)
       predictions.push(predictionRow)
       datePredictions.push(predictionRow)
 
@@ -623,6 +764,7 @@ async function run() {
         })
 
         const legacyPredictionRow = {
+          gamePk: game.gamePk,
           date,
           prediction: computeYrfiProbability(legacyLambdaHome, legacyLambdaAway),
           actual,
@@ -664,6 +806,7 @@ async function run() {
         })
 
         const infoPredictionRow = {
+          gamePk: game.gamePk,
           date,
           prediction: computeYrfiProbability(infoLambdaHome, infoLambdaAway),
           actual,
@@ -687,12 +830,25 @@ async function run() {
     process.exit(1)
   }
 
+  if (actualOnlyMode) {
+    const actualRate = predictions.reduce((sum, row) => sum + row.actual, 0) / predictions.length
+
+    console.log('')
+    console.log(`Games: ${predictions.length}`)
+    console.log(`Actual YRFI rate: ${formatPct(actualRate)}`)
+    console.log(`Actual NRFI rate: ${formatPct(1 - actualRate)}`)
+    console.log(`Neutral lambda:   ${computeNeutralLambdaFromYrfiRate(actualRate).toFixed(4)}`)
+    return
+  }
+
   const { avgPrediction, actualRate, calibrationGap, brierScore } = summarizePredictions(predictions)
 
   console.log('')
   console.log(`Games: ${predictions.length}`)
   console.log(`Average predicted YRFI: ${formatPct(avgPrediction)}`)
   console.log(`Actual YRFI rate:      ${formatPct(actualRate)}`)
+  console.log(`Actual NRFI rate:      ${formatPct(1 - actualRate)}`)
+  console.log(`Neutral lambda:        ${computeNeutralLambdaFromYrfiRate(actualRate).toFixed(4)}`)
   console.log(`Calibration gap:       ${formatPct(calibrationGap)}`)
   console.log(`Brier score:           ${brierScore.toFixed(4)}`)
   console.log('')

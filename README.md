@@ -44,10 +44,10 @@ All sources are free with no API key required.
 The model uses a **Poisson distribution** to estimate expected first-inning runs (λ) per half-inning.
 
 ```
-λ = 0.36 × bounded_adjustment_score
+λ = 0.3371 × bounded_adjustment_score
 ```
 
-The adjustment score is built from stabilized pitcher FIP, K%, Savant barrel rate, team OBP, confirmed top-of-order OBP, park factor, and weather. Noisy early-season inputs use a larger stabilization sample that tapers linearly from `1.75x` on March 15 to `1.00x` by July 1, correlated factors are damped, and the combined adjustment is bounded to keep the model in a realistic MLB range.
+The neutral baseline was recalibrated from every completed MLB regular-season game in 2023-2025, the post-pitch-clock sample: `3575` YRFI outcomes in `7290` games, or `49.0465%` YRFI and `50.9535%` NRFI. The adjustment score is built from stabilized pitcher FIP, K%, Savant barrel rate, team OBP, confirmed top-of-order OBP, park factor, and weather. Noisy early-season inputs use a larger stabilization sample that tapers linearly from `1.75x` on March 15 to `1.00x` by July 1, correlated factors are damped, and the combined adjustment is bounded to keep the model in a realistic MLB range.
 
 **P(YRFI)** = 1 − P(home scores 0) × P(away scores 0) = 1 − e^(−λ_home) × e^(−λ_away)
 

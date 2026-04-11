@@ -3,7 +3,7 @@
 import { BlockMath, InlineMath } from 'react-katex'
 
 const lambdaMath = String.raw`\begin{aligned}
-\lambda &= 0.36 \times A_{\text{bounded}} \\
+\lambda &= 0.3371 \times A_{\text{bounded}} \\
 A_{\text{raw}} &= F_{\text{FIP}} \times F_{K} \times F_{\text{barrel}} \times F_{\text{OBP}} \\
 &\quad \times F_{\text{top3}} \times F_{\text{park}} \times F_{\text{weather}} \\
 A_{\text{bounded}} &= \operatorname{clamp}(A_{\text{raw}}, 0.55, 1.55)
@@ -161,11 +161,11 @@ export default function MethodologyView() {
       <Section title="Step 1 — Estimate λ (expected runs) for each half-inning">
         <p className="mb-3 leading-relaxed">
           <InlineMath math={String.raw`\lambda`} /> represents the expected number of runs scored by one team in the first inning.
-          The model starts from a baseline of <InlineMath math="0.36" /> for one team&apos;s half-inning.
-          If both teams sit at that neutral baseline, the implied game-level rates are roughly{' '}
-          <InlineMath math="51.3\%" /> YRFI and <InlineMath math="48.7\%" /> NRFI. The model then adjusts each{' '}
-          half-inning baseline with seven stabilized inputs plus a lineup-aware top-of-order tweak when a confirmed
-          batting order is posted.
+          The model starts from a baseline of <InlineMath math="0.3371" /> for one team&apos;s half-inning.
+          That neutral prior was recalibrated from every completed MLB regular-season game in the pitch-clock era
+          from 2023 through 2025: <InlineMath math="3575 / 7290 \approx 49.0\%" /> YRFI and <InlineMath math="51.0\%" /> NRFI.
+          The model then adjusts each half-inning baseline with seven stabilized inputs plus a lineup-aware top-of-order
+          tweak when a confirmed batting order is posted.
         </p>
         <FormulaBlock math={lambdaMath} align="left" className="mb-6" />
 
@@ -201,7 +201,7 @@ export default function MethodologyView() {
         <p className="mt-3 text-slate-500 text-xs leading-relaxed">
           This assumes independence between the two half-innings, which is a reasonable approximation
           since different batters face different pitchers. At league-average inputs both half-innings have
-          <InlineMath math={String.raw`\lambda = 0.36`} />, which gives <InlineMath math={String.raw`P(\mathrm{YRFI}) = 1 - e^{-0.72} \approx 51.3\%`} />.
+          <InlineMath math={String.raw`\lambda = 0.3371`} />, which gives <InlineMath math={String.raw`P(\mathrm{YRFI}) = 1 - e^{-0.6742} \approx 49.0\%`} />.
         </p>
       </Section>
 

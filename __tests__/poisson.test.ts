@@ -145,9 +145,9 @@ describe('dateAdjustedStabilizationSample', () => {
 
 describe('computeYrfiProbability', () => {
   it('returns correct YRFI probability from two lambdas', () => {
-    // P(YRFI) = 1 - e^(-0.36) * e^(-0.36) = 1 - e^(-0.72) ≈ 0.5132
-    const result = computeYrfiProbability(0.36, 0.36)
-    expect(result).toBeCloseTo(0.5132, 3)
+    // P(YRFI) = 1 - e^(-BASE_LAMBDA) * e^(-BASE_LAMBDA) = 1 - e^(-0.6742) ≈ 0.4905
+    const result = computeYrfiProbability(BASE_LAMBDA, BASE_LAMBDA)
+    expect(result).toBeCloseTo(0.4905, 3)
   })
 
   it('returns higher probability when lambdas are higher', () => {

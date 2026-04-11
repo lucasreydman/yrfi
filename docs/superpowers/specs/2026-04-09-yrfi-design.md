@@ -86,7 +86,7 @@ lib/
 ### λ (Expected First-Inning Runs) Per Half-Inning
 
 ```
-Base λ = 0.36 per team half-inning  (if both teams are at baseline, game-level YRFI is about 51.3% and NRFI is about 48.7%)
+Base λ = 0.3371 per team half-inning  (calibrated from 2023-2025 completed MLB regular-season games: 3575 YRFI outcomes in 7290 games, or about 49.0% YRFI and 51.0% NRFI)
 
 Adjustments (stabilized and damped before being combined):
 
@@ -155,7 +155,7 @@ const LEAGUE_AVG_FIP = 3.80
 const LEAGUE_AVG_K_PCT = 0.23
 const LEAGUE_AVG_BARREL_PCT = 8.0   // expressed as percentage (0–100 scale)
 const LEAGUE_AVG_OBP = 0.310
-const BASE_LAMBDA = 0.36
+const BASE_LAMBDA = 0.3371
 const FIP_CONSTANT = 3.10           // ERA-scaling constant used in FIP formula
 ```
 
@@ -169,10 +169,10 @@ P(YRFI) = 1 − P(home scores 0) × P(away scores 0)
 
 The two half-innings are treated as independent (standard Poisson assumption, appropriate here).
 
-At league-average inputs both λ values are 0.36, so:
+At league-average inputs both λ values are 0.3371, so:
 
 ```
-P(YRFI) = 1 − e^(−0.36 − 0.36) = 1 − e^(−0.72) ≈ 51.3%
+P(YRFI) = 1 − e^(−0.3371 − 0.3371) = 1 − e^(−0.6742) ≈ 49.0%
 ```
 
 ### From YRFI Probability to Break-Even American Odds
