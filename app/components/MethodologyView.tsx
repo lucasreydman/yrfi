@@ -5,7 +5,7 @@ import { BlockMath, InlineMath } from 'react-katex'
 const lambdaMath = String.raw`\begin{aligned}
 \lambda &= 0.3371 \times A_{\text{bounded}} \\
 A_{\text{raw}} &= F_{\text{FIP}} \times F_{K} \times F_{\text{barrel}} \times F_{\text{OBP}} \\
-&\quad \times F_{\text{top3}} \times F_{\text{park}} \times F_{\text{weather}} \\
+&\quad \times F_{\text{top5}} \times F_{\text{park}} \times F_{\text{weather}} \\
 A_{\text{bounded}} &= \operatorname{clamp}(A_{\text{raw}}, 0.55, 1.55)
 \end{aligned}`
 
@@ -56,10 +56,10 @@ const factorRows = [
     source: 'MLB Stats API',
   },
   {
-    name: 'Top-3 lineup factor',
-    formula: String.raw`\left(\operatorname{clamp}\!\left(\dfrac{\text{shrunk top-3 OBP}}{\text{team OBP}},\ 0.90,\ 1.12\right)\right)^{0.45}`,
-    mobileFormula: String.raw`\left(\operatorname{clamp}\!\left(\dfrac{OBP_{top3}}{OBP_{team}},\ 0.90,\ 1.12\right)\right)^{0.45}`,
-    description: 'When a confirmed lineup is available, the first three hitters add a modest relative adjustment on top of the team baseline. If no confirmed order is posted, this factor stays neutral.',
+    name: 'Top-5 lineup factor',
+    formula: String.raw`\left(\operatorname{clamp}\!\left(\dfrac{\bar{OBP}_{1\text{-}5,w}}{\text{team OBP}},\ 0.90,\ 1.12\right)\right)^{0.45}`,
+    mobileFormula: String.raw`\left(\operatorname{clamp}\!\left(\dfrac{\bar{OBP}_{1\text{-}5,w}}{OBP_\text{team}},\ 0.90,\ 1.12\right)\right)^{0.45}`,
+    description: 'When a confirmed lineup is available, the probability-weighted OBP of the first five hitters replaces the old simple top-three average. Batters 1–3 carry full weight (1.00); batter 4 is weighted 0.67 and batter 5 is weighted 0.37, reflecting each one\'s first-inning plate appearance probability derived from the binomial distribution over the league out rate (0.69). If fewer than three hitters are confirmed, this factor stays neutral.',
     source: 'MLB Stats API',
   },
   {
@@ -92,7 +92,7 @@ T>80^\circ\!F&\to1.06,\ \mathrm{else}\to1.00
 ] as const
 
 const caveats = [
-  'Full lineup context beyond the confirmed top three hitters',
+  'Lineup context beyond the fifth hitter, whose first-inning plate appearance probability drops below 30%',
   'Bullpen usage or opener strategies',
   'In-game factors like pitch count, injury, or weather changes mid-game',
   'Umpire tendencies or day/night splits',
@@ -183,8 +183,8 @@ export default function MethodologyView() {
           Each team&apos;s <InlineMath math={String.raw`\lambda`} /> uses that team&apos;s OBP and the <em>opposing</em>
           {' '}pitcher&apos;s stats,
           because the home team bats against the away starter, and vice versa. If a confirmed lineup is available,
-          the model also compares that team&apos;s top three hitters against its broader team baseline rather than treating
-          every batting order as interchangeable.
+          the model compares the probability-weighted OBP of that team&apos;s top five hitters against its broader team
+          baseline rather than treating every batting order as interchangeable.
           The raw adjustment is then bounded to keep the model in a realistic MLB range, and league-average
           values are only used when the starter identity or a required stat feed is actually missing.
         </p>

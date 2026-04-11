@@ -225,6 +225,14 @@ export async function fetchTeamOffenseStats(teamId: number, season: number, date
   }
 }
 
+// Batter participation weights for the first inning.
+// P(batter N comes up) = P(< 3 outs accumulated in PAs 1…N-1).
+// Using P(out per PA) = 1 − LEAGUE_AVG_OBP ≈ 0.690:
+//   Batters 1–3: 1.000  (two PAs cannot produce 3 outs — guaranteed)
+//   Batter 4:    1 − 0.69³               = 0.672
+//   Batter 5:    P(X ≤ 2 | Bin(4, 0.69)) = 0.366
+const TOP_OF_ORDER_BATTER_WEIGHTS = [1.0, 1.0, 1.0, 0.672, 0.366] as const
+
 export function extractTopOfOrderStats(
   players: Record<string, MlbGameFeedPlayer> | undefined,
   date?: string,
@@ -236,31 +244,39 @@ export function extractTopOfOrderStats(
   const orderedHitters = Object.values(players)
     .filter(player => Boolean(player.battingOrder))
     .sort((left, right) => parseInt(left.battingOrder ?? '0', 10) - parseInt(right.battingOrder ?? '0', 10))
-    .slice(0, 3)
+    .slice(0, TOP_OF_ORDER_BATTER_WEIGHTS.length)
 
   if (orderedHitters.length < 3) {
     return { topOfOrderOBP: null, batterCount: orderedHitters.length, confirmed: false }
   }
 
   const stabilizationSample = dateAdjustedStabilizationSample(TOP_OF_ORDER_OBP_STABILIZATION_PA, date)
-  const obps = orderedHitters
-    .map(player => {
-      const batting = player.seasonStats?.batting
-      const rawObp = parseFloat(batting?.obp ?? '')
-      const plateAppearances = batting?.plateAppearances ?? 0
-      if (!Number.isFinite(rawObp)) return null
 
-      return shrinkTowardAverage(rawObp, LEAGUE_AVG_OBP, plateAppearances, stabilizationSample)
-    })
-    .filter((value): value is number => value !== null)
+  let weightedSum = 0
+  let totalWeight = 0
+  let validCount = 0
 
-  if (obps.length < 3) {
-    return { topOfOrderOBP: null, batterCount: obps.length, confirmed: false }
+  for (let i = 0; i < orderedHitters.length; i++) {
+    const player = orderedHitters[i]
+    const weight = TOP_OF_ORDER_BATTER_WEIGHTS[i]
+    const batting = player.seasonStats?.batting
+    const rawObp = parseFloat(batting?.obp ?? '')
+    const plateAppearances = batting?.plateAppearances ?? 0
+    if (!Number.isFinite(rawObp)) continue
+
+    const stabilizedObp = shrinkTowardAverage(rawObp, LEAGUE_AVG_OBP, plateAppearances, stabilizationSample)
+    weightedSum += stabilizedObp * weight
+    totalWeight += weight
+    validCount++
+  }
+
+  if (validCount < 3 || totalWeight === 0) {
+    return { topOfOrderOBP: null, batterCount: validCount, confirmed: false }
   }
 
   return {
-    topOfOrderOBP: obps.reduce((sum, value) => sum + value, 0) / obps.length,
-    batterCount: obps.length,
+    topOfOrderOBP: weightedSum / totalWeight,
+    batterCount: validCount,
     confirmed: true,
   }
 }

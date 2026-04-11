@@ -127,7 +127,7 @@ npx vercel --prod # Deploy to production
 - **Mobile controls:** Today, Tomorrow, Preferences, and Methodology use the same compact pill treatment; the methodology tab keeps Back to games and Methodology aligned on one row with matched sizing
 - **Estimate marker:** `~` prefixes YRFI when one or both probable starters are still TBD or when a named starter still relies on fallback pitcher inputs
 - **Odds availability:** Break-even odds are hidden only when a probable starter is still TBD
-- **Lineup-aware adjustment:** If a confirmed batting order is posted, the model compares the top three hitters against the team baseline and adjusts the YRFI number accordingly
+- **Lineup-aware adjustment:** If a confirmed batting order is posted, the model computes a probability-weighted average OBP for the first five hitters and compares it against the team baseline. Batters 1–3 are weighted 1.00 (guaranteed to bat); batter 4 is weighted 0.672 and batter 5 is weighted 0.366, derived from `P(X ≤ 2 | Binomial(n, 0.69))` — the probability each batter reaches the plate given the league out rate of 0.69 per PA
 - **Roofed/retractable parks:** Weather is neutralized and the UI shows `Roof`
 - **Weather failure:** Factors default to 1.0; weather column shows `—`
 - **Preferences:** Temperature unit, wind unit, odds format, timezone — persisted in localStorage
