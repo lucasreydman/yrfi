@@ -20,7 +20,8 @@ function FactorChip({ badge }: { badge: FactorBadge }) {
       <span className={`inline-flex items-center gap-1 rounded border px-1.5 py-0.5 font-mono font-semibold tabular-nums ${chipClass}`}>
         {arrow} {badge.multiplier.toFixed(2)}×
       </span>
-      <span className="text-slate-500">{badge.label} — {badge.description}</span>
+      <span className="font-medium text-slate-700">{badge.label}</span>
+      <span className="text-slate-400">{badge.description}</span>
     </div>
   )
 }
@@ -60,15 +61,13 @@ function PitcherCard({
           {statusLabel}
         </span>
       </div>
-      <div className="mb-3 grid grid-cols-3 gap-1 text-center">
+      <div className="mb-3 grid grid-cols-4 gap-1 text-center">
         <Stat label="FIP" value={pitcher.fip.toFixed(2)} />
         <Stat label="K%" value={`${(pitcher.kPct * 100).toFixed(1)}%`} />
         <Stat label="Barrel%" value={`${pitcher.barrelRate.toFixed(1)}%`} />
+        <Stat label="λ" value={lambda.toFixed(3)} />
       </div>
       <div className="space-y-1.5">
-        <div className="text-[0.65rem] font-semibold uppercase tracking-wider text-slate-400">
-          Effect on run rate · λ = {lambda.toFixed(3)}
-        </div>
         {factors.map(f => <FactorChip key={f.label} badge={f} />)}
       </div>
     </div>
@@ -105,7 +104,7 @@ function LineupCard({
             <tr className="text-left text-[0.6rem] font-semibold uppercase tracking-wider text-slate-400">
               <th className="pb-1 pr-2">#</th>
               <th className="pb-1 pr-2">Batter</th>
-              <th className="pb-1 pr-2 text-right">OBP</th>
+              <th className="pb-1 pr-2 text-right">OBP (adj)</th>
               <th className="pb-1 text-right">PA</th>
             </tr>
           </thead>
@@ -127,7 +126,6 @@ function LineupCard({
       )}
 
       <div className="space-y-1.5">
-        <div className="text-[0.65rem] font-semibold uppercase tracking-wider text-slate-400">Effect on run rate</div>
         {factors.map(f => <FactorChip key={f.label} badge={f} />)}
       </div>
     </div>
@@ -200,7 +198,7 @@ export default function MatchupDetail({ game }: { game: GameResult }) {
   return (
     <div className="space-y-3 text-sm">
       {/* Away team bats (home pitcher vs away lineup) */}
-      <SectionHeader label={`${awayTeam} offense vs ${homeTeam} pitcher`} />
+      <SectionHeader label={`${awayTeam} batting`} />
       <HalfInningSection
         pitcherLabel="Home SP"
         lineupLabel={`${awayTeam} lineup`}
@@ -212,7 +210,7 @@ export default function MatchupDetail({ game }: { game: GameResult }) {
       />
 
       {/* Home team bats (away pitcher vs home lineup) */}
-      <SectionHeader label={`${homeTeam} offense vs ${awayTeam} pitcher`} />
+      <SectionHeader label={`${homeTeam} batting`} />
       <HalfInningSection
         pitcherLabel="Away SP"
         lineupLabel={`${homeTeam} lineup`}

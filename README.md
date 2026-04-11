@@ -71,18 +71,20 @@ app/
     ClientShell.tsx          # Root client component; owns state + polling timers
     GameTable.tsx            # Ranked table (desktop) + card list (mobile)
     GameRow.tsx              # Single row: teams, pitchers, YRFI %, min odds, weather, result
+    MatchupDetail.tsx        # Expandable model breakdown panel (pitchers, lineups, park/weather)
     DatePicker.tsx           # Today/tomorrow navigation (Pacific date anchor)
     StatusBar.tsx            # Last updated, game count, manual refresh
     LoadingSkeleton.tsx      # Loading state with elapsed timer
     ConfigPanel.tsx          # Preferences panel (temp, wind, odds format, timezone)
     MethodologyView.tsx      # Poisson model explainer tab
 lib/
-  types.ts                   # GameResult, GamesResponse, PitcherStats, SavantStats, WeatherData
-  mlb-api.ts                 # Schedule, pitcher stats, team OBP, boxscore linescore
+  types.ts                   # GameResult, GamesResponse, PitcherStats, BatterRow, WeatherData
+  mlb-api.ts                 # Schedule, pitcher stats, team OBP, boxscore linescore, top-5 batters
   savant-api.ts              # Baseball Savant CSV fetch + KV cache (12hr TTL)
   weather-api.ts             # Open-Meteo fetch; hardcoded stadium lat/lon/outfieldFacing
   park-factors.ts            # Hardcoded runs park factors for all 30 stadiums (FanGraphs)
   poisson.ts                 # λ calculation, P(YRFI), break-even American odds
+  model-breakdown.ts         # Per-factor multiplier computation for the detail panel
   game-status.ts             # getGameStatus(), computeFirstInningResult()
   cache.ts                   # createCache<T>(ttlMs) — in-memory TTL cache
   kv.ts                      # Vercel KV wrapper with in-memory fallback
@@ -95,7 +97,7 @@ lib/
 
 | Key | Value | TTL | Purpose |
 |---|---|---|---|
-| `games-response:{date}` | `GamesResponse` | 5 min | Full compiled model output for the slate |
+| `games-response:v3:{date}` | `GamesResponse` | 5 min | Full compiled model output for the slate |
 | `savant-pitchers:{year}` | `Record<string, SavantStats>` | 12 hr | Barrel rate + hard-hit rate by pitcher |
 
 ---
@@ -119,6 +121,7 @@ npx vercel --prod # Deploy to production
 - **Auto-refresh:** API re-fetched every 5 minutes; UI clock updates every 60s (no extra API call)
 - **Game groups:** Upcoming → In Progress → Settled
 - **Responsive layout:** Mobile uses stacked game cards, condensed controls, and a card-based methodology view; desktop keeps the fixed-width ranked table layout
+- **Matchup detail:** Tap or click any game row/card to expand an inline breakdown showing each pitcher's FIP/K%/Barrel%/λ, the confirmed top-5 lineup with stabilized OBP, and park/weather factor chips with direction and multiplier
 - **Matchup labels:** Team nicknames only in table and mobile card views (for example, Yankees, Twins, Red Sox)
 - **YRFI % colors:** green–yellow–red gradient anchored to the model's realistic range (44–60%); green = well above league average, yellow = near average (~49%), red = well below average. Same gradient direction as BET-NRFI — greener always means a stronger bet signal.
 - **YRFI % display:** Percentages render to two decimal places
@@ -127,7 +130,7 @@ npx vercel --prod # Deploy to production
 - **Mobile controls:** Today, Tomorrow, Preferences, and Methodology use the same compact pill treatment; the methodology tab keeps Back to games and Methodology aligned on one row with matched sizing
 - **Estimate marker:** `~` prefixes YRFI when one or both probable starters are still TBD or when a named starter still relies on fallback pitcher inputs
 - **Odds availability:** Break-even odds are hidden only when a probable starter is still TBD
-- **Lineup-aware adjustment:** If a confirmed batting order is posted, the model computes a probability-weighted average OBP for the first five hitters and compares it against the team baseline. Batters 1–3 are weighted 1.00 (guaranteed to bat); batter 4 is weighted 0.672 and batter 5 is weighted 0.366, derived from `P(X ≤ 2 | Binomial(n, 0.69))` — the probability each batter reaches the plate given the league out rate of 0.69 per PA
+- **Lineup-aware adjustment:** If a confirmed batting order is posted, the model computes a probability-weighted average OBP for the first five hitters and compares it against the team baseline. Batters 1–3 are weighted 1.00 (guaranteed to bat); batter 4 is weighted 0.672 and batter 5 is weighted 0.366, derived from `P(X ≤ 2 | Binomial(n, 0.69))` — the probability each batter reaches the plate given the league out rate of 0.69 per PA. Individual batter names, stabilized OBP, and PA are exposed in the API response and shown in the matchup detail panel
 - **Roofed/retractable parks:** Weather is neutralized and the UI shows `Roof`
 - **Weather failure:** Factors default to 1.0; weather column shows `—`
 - **Preferences:** Temperature unit, wind unit, odds format, timezone — persisted in localStorage
