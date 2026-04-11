@@ -1,15 +1,24 @@
-const MIN_REALISTIC_YRFI = 0.46
-const MAX_REALISTIC_YRFI = 0.54
+// Model output range (BASE_LAMBDA=0.3371, adj 0.55–1.55):
+//   min YRFI ≈ 31%  (both pitchers elite, cold/wind-in conditions)
+//   avg YRFI ≈ 49%  (league-average everything)
+//   max YRFI ≈ 65%  (both pitchers weak, hot/wind-out conditions)
+//
+// Color scale: red (weak bet) → yellow (near average) → green (strong bet)
+// Same gradient direction as NRFI: higher probability = greener = bet it.
+const MIN_REALISTIC_YRFI = 0.37
+const MAX_REALISTIC_YRFI = 0.62
+
+// 9-stop gradient: hsl(0) red → hsl(140) green, uniform hue steps
 const YRFI_COLOR_CLASSES = [
-  'text-[hsl(12_82%_42%)]',
-  'text-[hsl(24_82%_42%)]',
-  'text-[hsl(36_82%_42%)]',
-  'text-[hsl(48_82%_42%)]',
-  'text-[hsl(60_82%_38%)]',
-  'text-[hsl(78_82%_34%)]',
-  'text-[hsl(96_82%_32%)]',
-  'text-[hsl(118_82%_32%)]',
-  'text-[hsl(145_82%_32%)]',
+  'text-[hsl(0_82%_42%)]',    // deep red   — well below average
+  'text-[hsl(17_82%_41%)]',
+  'text-[hsl(35_82%_40%)]',   // orange
+  'text-[hsl(52_82%_39%)]',
+  'text-[hsl(70_82%_38%)]',   // yellow     — near league average (~49%)
+  'text-[hsl(87_82%_36%)]',
+  'text-[hsl(105_82%_34%)]',
+  'text-[hsl(122_82%_33%)]',
+  'text-[hsl(140_82%_32%)]',  // deep green — well above average
 ] as const
 
 function clamp(value: number, min: number, max: number): number {
