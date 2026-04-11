@@ -162,8 +162,8 @@ export default function MethodologyView() {
         <p className="mb-3 leading-relaxed">
           <InlineMath math={String.raw`\lambda`} /> represents the expected number of runs scored by one team in the first inning.
           The model starts from a baseline of <InlineMath math="0.36" /> for one team&apos;s half-inning.
-          If both teams sit at that neutral baseline, the implied game-level rates are roughly
-          <InlineMath math="51.3\%" /> YRFI and <InlineMath math="48.7\%" /> NRFI. The model then adjusts each
+          If both teams sit at that neutral baseline, the implied game-level rates are roughly{' '}
+          <InlineMath math="51.3\%" /> YRFI and <InlineMath math="48.7\%" /> NRFI. The model then adjusts each{' '}
           half-inning baseline with seven stabilized inputs plus a lineup-aware top-of-order tweak when a confirmed
           batting order is posted.
         </p>
