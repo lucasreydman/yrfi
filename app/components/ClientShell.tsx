@@ -164,7 +164,12 @@ export default function ClientShell() {
                       Matchup details
                     </span>
                     <p className="text-sm leading-5 text-slate-700">
-                      Tap any matchup for the full breakdown, and check back 30 to 60 minutes before first pitch for the most accurate lineups and weather statistics.
+                      <span className="hidden sm:inline">
+                        Tap on any matchup row for the full breakdown, and check back 30 to 60 minutes before first pitch for the most accurate lineups and weather statistics.
+                      </span>
+                      <span className="sm:hidden">
+                        Tap on any matchup card for the full breakdown, and check back 30 to 60 minutes before first pitch for the most accurate lineups and weather statistics.
+                      </span>
                     </p>
                   </div>
                 </div>
