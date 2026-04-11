@@ -161,15 +161,13 @@ export default function ClientShell() {
                 <div className="mb-5 rounded-2xl border border-slate-200 bg-[linear-gradient(180deg,rgba(248,250,252,0.96),rgba(255,255,255,1))] px-4 py-3 shadow-[0_1px_0_rgba(255,255,255,0.9)_inset]">
                   <div className="grid gap-2.5 sm:grid-cols-[auto_minmax(0,1fr)] sm:items-start sm:gap-x-3 sm:gap-y-1.5">
                     <span className="inline-flex w-fit items-center rounded-full border border-slate-200 bg-white px-2.5 py-1 text-[0.65rem] font-semibold uppercase tracking-[0.14em] text-slate-500">
-                      Matchup detail
+                      Matchup details
                     </span>
                     <p className="text-sm font-medium leading-5 text-slate-700">
-                      Tap any matchup to see the full model breakdown: pitchers, lineups, park, and weather.
+                      Tap any matchup for the full breakdown, and check back 30 to 60 minutes before first pitch for the most accurate lineups and weather.
                     </p>
                     <span className="hidden sm:block" aria-hidden="true" />
-                    <p className="text-sm leading-5 text-slate-500">
-                      For the sharpest read, check back 30 to 60 minutes before first pitch after lineups post and the weather firms up.
-                    </p>
+                    <span className="hidden sm:block" aria-hidden="true" />
                   </div>
                 </div>
               )}
