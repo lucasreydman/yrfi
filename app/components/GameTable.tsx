@@ -85,7 +85,7 @@ function MobileCard({ game }: { game: GameResult }) {
 
   return (
     <article
-      className="rounded-2xl border border-slate-200 bg-white shadow-sm shadow-slate-200/50 cursor-pointer select-none"
+      className="rounded-2xl border border-slate-200 bg-white shadow-sm shadow-slate-200/50 cursor-pointer select-none transition-transform duration-75 active:scale-[0.98]"
       onClick={() => setExpanded(e => !e)}
     >
       <div className="p-4">
@@ -117,11 +117,19 @@ function MobileCard({ game }: { game: GameResult }) {
         </div>
       </div>
 
-      {expanded && (
-        <div className="border-t border-slate-100 px-4 pb-4 pt-3" onClick={e => e.stopPropagation()}>
-          <MatchupDetail game={game} />
+      <div
+        style={{
+          display: 'grid',
+          gridTemplateRows: expanded ? '1fr' : '0fr',
+          transition: 'grid-template-rows 300ms cubic-bezier(0.4, 0, 0.2, 1)',
+        }}
+      >
+        <div style={{ overflow: 'hidden' }}>
+          <div className="border-t border-slate-100 px-4 pb-4 pt-3" onClick={e => e.stopPropagation()}>
+            <MatchupDetail game={game} />
+          </div>
         </div>
-      )}
+      </div>
     </article>
   )
 }

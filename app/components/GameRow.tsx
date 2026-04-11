@@ -88,7 +88,7 @@ export default function GameRow({ game }: GameRowProps) {
   return (
     <>
       <tr
-        className="cursor-pointer border-b border-slate-100 hover:bg-slate-50 select-none"
+        className="cursor-pointer border-b border-slate-100 hover:bg-slate-50 select-none transition-[background-color,transform] duration-75 active:scale-[0.998] active:bg-slate-100"
         onClick={() => setExpanded(e => !e)}
       >
         {/* Matchup */}
@@ -127,13 +127,23 @@ export default function GameRow({ game }: GameRowProps) {
         </td>
       </tr>
 
-      {expanded && (
-        <tr>
-          <td colSpan={9} className="border-b border-slate-100 bg-slate-50/70 px-6 py-4">
-            <MatchupDetail game={game} />
-          </td>
-        </tr>
-      )}
+      <tr>
+        <td colSpan={9} className={expanded ? 'border-b border-slate-100' : ''} style={{ padding: 0 }}>
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateRows: expanded ? '1fr' : '0fr',
+              transition: 'grid-template-rows 300ms cubic-bezier(0.4, 0, 0.2, 1)',
+            }}
+          >
+            <div style={{ overflow: 'hidden' }}>
+              <div className="bg-slate-50/70 px-6 py-4">
+                <MatchupDetail game={game} />
+              </div>
+            </div>
+          </div>
+        </td>
+      </tr>
     </>
   )
 }
