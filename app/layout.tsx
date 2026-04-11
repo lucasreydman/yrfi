@@ -6,7 +6,7 @@ import { SITE_NAME, getSiteUrl } from '@/lib/site'
 const geist = Geist({ subsets: ['latin'] })
 const metadataTitle = SITE_NAME
 const metadataDescription = 'Find the minimum odds you need to bet YRFI with a statistical edge. Model-driven, updated daily.'
-const ogImageUrl = `${getSiteUrl()}/yrfi-opengraph.png`
+const ogImageUrl = `${getSiteUrl()}/bet-yrfi-opengraph.png`
 
 export const metadata: Metadata = {
   applicationName: 'bet-yrfi',
