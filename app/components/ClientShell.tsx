@@ -168,16 +168,31 @@ export default function ClientShell() {
         </>
       )}
 
-      <footer className="border-t border-slate-100 px-4 py-5 text-center text-sm text-slate-500">
-        Built by{' '}
-        <a
-          href="https://lucasreydman.xyz"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="font-medium text-green-700 underline decoration-green-200 underline-offset-2 transition-colors hover:text-green-800"
-        >
-          Lucas Reydman
-        </a>
+      <footer className="border-t border-slate-100 px-4 py-5 text-sm text-slate-500">
+        <div className="flex flex-col items-center gap-2 sm:flex-row sm:justify-between">
+          <span>
+            Built by{' '}
+            <a
+              href="https://lucasreydman.xyz"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-medium text-green-700 underline decoration-green-200 underline-offset-2 transition-colors hover:text-green-800"
+            >
+              Lucas Reydman
+            </a>
+          </span>
+          <span>
+            Enjoy this?{' '}
+            <a
+              href="https://bet-nrfi.vercel.app"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-medium text-red-700 underline decoration-red-200 underline-offset-2 transition-colors hover:text-red-800"
+            >
+              Check out BET-NRFI →
+            </a>
+          </span>
+        </div>
       </footer>
     </div>
     </SettingsProvider>

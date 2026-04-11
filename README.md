@@ -3,8 +3,10 @@
 A standalone MLB betting tool that calculates the probability of a run being scored in the first inning (**YRFI** — Yes Run First Inning) for every game on the selected slate.
 
 For each game it shows:
-- The model's **YRFI probability** (%) to one decimal place
+- The model's **YRFI probability** (%) to two decimal places
 - The **minimum American odds** needed at your sportsbook for a +EV bet
+
+**See also:** [BET-NRFI](https://bet-nrfi.vercel.app) — the companion tool for the other side of the same bet.
 
 No sportsbook integration — you compare the threshold against your own book and decide.
 
@@ -118,8 +120,8 @@ npx vercel --prod # Deploy to production
 - **Game groups:** Upcoming → In Progress → Settled
 - **Responsive layout:** Mobile uses stacked game cards, condensed controls, and a card-based methodology view; desktop keeps the fixed-width ranked table layout
 - **Matchup labels:** Team nicknames only in table and mobile card views (for example, Yankees, Twins, Red Sox)
-- **YRFI % colors:** green ≥ 55%, yellow 45–54%, red < 45%
-- **YRFI % display:** Percentages render to one decimal place
+- **YRFI % colors:** green–yellow–red gradient anchored to the model's realistic range (44–60%); green = well above league average, yellow = near average (~49%), red = well below average. Same gradient direction as BET-NRFI — greener always means a stronger bet signal.
+- **YRFI % display:** Percentages render to two decimal places
 - **Result column:** Upcoming shows `—`, in-progress first innings show `IP`, scoring first innings show `RUN`, and scoreless first innings show `NO RUN`
 - **Desktop table alignment:** Temp, Wind, Time, and Result use centered fixed-width columns for uniform spacing
 - **Mobile controls:** Today, Tomorrow, Preferences, and Methodology use the same compact pill treatment; the methodology tab keeps Back to games and Methodology aligned on one row with matched sizing
@@ -129,7 +131,7 @@ npx vercel --prod # Deploy to production
 - **Roofed/retractable parks:** Weather is neutralized and the UI shows `Roof`
 - **Weather failure:** Factors default to 1.0; weather column shows `—`
 - **Preferences:** Temperature unit, wind unit, odds format, timezone — persisted in localStorage
-- **Footer credit:** The page footer links to lucasreydman.xyz
+- **Footer:** Left side links to lucasreydman.xyz; right side links to BET-NRFI (highlighted in red, matching that site's accent color)
 - **Methodology math:** Formula blocks use smaller mobile typography so they stay visible without horizontal scrolling
 
 ---
