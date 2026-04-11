@@ -9,3 +9,10 @@
 - [x] Add lineup-aware top-of-order adjustment with graceful fallback
 - [x] Update methodology/docs/tests for the new model inputs
 - [x] Run targeted validation for model changes
+
+## 2026-04-11 Deployment Fix
+
+- [x] Inspect Vercel project state
+- [x] Identify 404 root cause
+- [x] Apply framework override and redeploy
+- [x] Verify production domain
