@@ -39,11 +39,11 @@ describe('model-breakdown badge copy', () => {
 
     expect(downBarrel).toMatchObject({
       direction: 'down',
-      description: 'slightly suppresses barrels',
+      description: 'keeps barrel damage down',
     })
     expect(upBarrel).toMatchObject({
       direction: 'up',
-      description: 'allows hard contact',
+      description: 'gives up loud contact',
     })
   })
 
@@ -55,11 +55,11 @@ describe('model-breakdown badge copy', () => {
 
     expect(downObp).toMatchObject({
       direction: 'down',
-      description: 'slightly below-average OBP',
+      description: 'below-average on-base profile',
     })
     expect(upObp).toMatchObject({
       direction: 'up',
-      description: 'slightly above-average OBP',
+      description: 'above-average on-base profile',
     })
   })
 })

@@ -62,27 +62,27 @@ function pitcherFactors(p: PitcherStats): FactorBadge[] {
   const barrelM = Math.pow(p.barrelRate / LEAGUE_AVG_BARREL_PCT, 0.35)
 
   const fipDesc = impactDescription(fipM, {
-    strongDown: 'run-suppressing FIP',
-    down: 'slightly better than avg FIP',
+    strongDown: 'excellent run prevention',
+    down: 'better than league-average FIP',
     neutral: 'near average',
-    up: 'slightly worse than avg FIP',
-    strongUp: 'hitter-friendly FIP',
+    up: 'worse than league-average FIP',
+    strongUp: 'run-prone FIP',
   })
 
   const kDesc = impactDescription(kM, {
-    strongDown: 'high strikeout rate',
-    down: 'above-average K rate',
+    strongDown: 'bat-missing strikeout rate',
+    down: 'above-average strikeout rate',
     neutral: 'average K rate',
-    up: 'below-average K rate',
-    strongUp: 'low strikeout rate',
+    up: 'below-average strikeout rate',
+    strongUp: 'contact-heavy strikeout rate',
   })
 
   const barrelDesc = impactDescription(barrelM, {
     strongDown: 'limits hard contact',
-    down: 'slightly suppresses barrels',
+    down: 'keeps barrel damage down',
     neutral: 'average barrel rate',
-    up: 'slightly elevated barrel rate',
-    strongUp: 'allows hard contact',
+    up: 'elevated barrel rate',
+    strongUp: 'gives up loud contact',
   })
 
   return [
@@ -98,11 +98,11 @@ function lineupFactors(
 ): FactorBadge[] {
   const obpM = Math.pow(teamOBP / LEAGUE_AVG_OBP, 0.70)
   const obpDesc = impactDescription(obpM, {
-    strongDown: 'weak lineup OBP',
-    down: 'slightly below-average OBP',
+    strongDown: 'low-on-base lineup',
+    down: 'below-average on-base profile',
     neutral: 'average OBP',
-    up: 'slightly above-average OBP',
-    strongUp: 'strong lineup OBP',
+    up: 'above-average on-base profile',
+    strongUp: 'constant baserunner pressure',
   })
   const badges: FactorBadge[] = [badge('Team OBP', obpM, obpDesc)]
 
@@ -110,11 +110,11 @@ function lineupFactors(
     const ratio = Math.min(Math.max(topOfOrderOBP / teamOBP, 0.90), 1.12)
     const topM = Math.pow(ratio, 0.45)
     const topDesc = impactDescription(topM, {
-      strongDown: 'weak top of order',
-      down: 'slightly below-average top of order',
+      strongDown: 'soft top of order',
+      down: 'lighter top-of-order threat',
       neutral: 'average top of order',
-      up: 'slightly above-average top of order',
-      strongUp: 'strong top of order',
+      up: 'strong top-of-order threat',
+      strongUp: 'dangerous top of order',
     })
     badges.push(badge('Top of order', topM, topDesc))
   }

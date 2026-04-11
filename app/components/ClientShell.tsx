@@ -158,9 +158,14 @@ export default function ClientShell() {
           {!loading && !error && data && (
             <div className="px-4 py-6">
               {data.games.length > 0 && (
-                <p className="mb-5 text-xs text-slate-400">
-                  Tap any matchup to see the full model breakdown — pitchers, lineups, park &amp; weather.
-                </p>
+                <div className="mb-5 flex flex-col gap-2 rounded-xl border border-slate-200 bg-slate-50/80 px-3 py-2 text-xs text-slate-500 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
+                  <p>
+                    Tap any matchup to see the full model breakdown: pitchers, lineups, park, and weather.
+                  </p>
+                  <p className="sm:text-right sm:text-slate-400">
+                    Best checked 30 to 60 minutes before first pitch, once lineups are posted and the weather settles.
+                  </p>
+                </div>
               )}
               {data.games.length === 0 && (
                 <p className="text-center text-slate-400">No games scheduled for this date.</p>
