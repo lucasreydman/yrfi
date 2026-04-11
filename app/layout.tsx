@@ -4,11 +4,12 @@ import './globals.css'
 import { SITE_NAME, getSiteUrl } from '@/lib/site'
 
 const geist = Geist({ subsets: ['latin'] })
-const metadataTitle = 'YRFI: Model-driven MLB first-inning edge'
+const metadataTitle = 'bet-yrfi: Model-driven MLB first-inning edge'
 const metadataDescription = 'Find the minimum odds you need to bet YRFI with a statistical edge. Model-driven, updated daily.'
 const ogImageUrl = `${getSiteUrl()}/yrfi-opengraph.png`
 
 export const metadata: Metadata = {
+  applicationName: 'bet-yrfi',
   title: {
     absolute: metadataTitle,
   },
@@ -29,7 +30,7 @@ export const metadata: Metadata = {
     images: [
       {
         url: ogImageUrl,
-        alt: 'YRFI open graph image',
+        alt: 'BET-YRFI open graph image',
       },
     ],
   },

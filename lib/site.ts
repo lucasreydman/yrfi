@@ -14,4 +14,4 @@ export function getSiteUrl(): string {
   return stripTrailingSlash(rawUrl)
 }
 
-export const SITE_NAME = 'YRFI'
+export const SITE_NAME = 'BET-YRFI'

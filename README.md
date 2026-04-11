@@ -1,4 +1,4 @@
-# YRFI — MLB YRFI Betting Model
+# BET-YRFI — MLB YRFI Betting Model
 
 A standalone MLB betting tool that calculates the probability of a run being scored in the first inning (**YRFI** — Yes Run First Inning) for every game on the selected slate.
 
@@ -7,6 +7,13 @@ For each game it shows:
 - The **minimum American odds** needed at your sportsbook for a +EV bet
 
 No sportsbook integration — you compare the threshold against your own book and decide.
+
+---
+
+## App and URL
+
+- **App name:** `bet-yrfi`
+- **Production URL:** `https://bet-yrfi.vercel.app`
 
 ---
 
