@@ -52,10 +52,8 @@ The adjustment score is built from stabilized pitcher FIP, K%, Savant barrel rat
 **P(YRFI)** = 1 − P(home scores 0) × P(away scores 0) = 1 − e^(−λ_home) × e^(−λ_away)
 
 Break-even American odds are derived from the probability:
-- p ≥ 0.5 → negative odds (e.g. `-150 or better`)
-- p < 0.5 → positive odds (e.g. `+163 or better`)
-
-See [docs/superpowers/specs/2026-04-09-yrfi-design.md](docs/superpowers/specs/2026-04-09-yrfi-design.md) for the full model spec.
+- p ≥ 0.5 → negative odds (for example `-150 or better`)
+- p < 0.5 → positive odds (for example `+163 or better`)
 
 ---
 
@@ -127,7 +125,7 @@ npx vercel --prod # Deploy to production
 - **Mobile controls:** Today, Tomorrow, Preferences, and Methodology use the same compact pill treatment; the methodology tab keeps Back to games and Methodology aligned on one row with matched sizing
 - **TBD starters:** `~` prefixes YRFI and suppresses the bet threshold only when one or both probable starters are still TBD
 - **Limited pitcher data:** Named starters with missing season or Savant inputs show a `Limited data` badge on that pitcher instead of turning the whole game into an estimated display
-- **Lineup-aware boost:** If a confirmed batting order is posted, the model compares the top three hitters against the team baseline and nudges the YRFI number accordingly
+- **Lineup-aware adjustment:** If a confirmed batting order is posted, the model compares the top three hitters against the team baseline and adjusts the YRFI number accordingly
 - **Roofed/retractable parks:** Weather is neutralized and the UI shows `Roof`
 - **Weather failure:** Factors default to 1.0; weather column shows `—`
 - **Preferences:** Temperature unit, wind unit, odds format, timezone — persisted in localStorage
