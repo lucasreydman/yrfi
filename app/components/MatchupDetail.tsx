@@ -3,6 +3,7 @@
 import type { GameResult, BatterRow, PitcherStats } from '@/lib/types'
 import { computeMatchupBreakdown, type FactorBadge, type HalfInningBreakdown } from '@/lib/model-breakdown'
 import { getTeamDisplayName } from '@/lib/team-names'
+import { useSettings } from '@/app/context/SettingsContext'
 // ─── Factor badge chip ────────────────────────────────────────────────────────
 
 function FactorChip({ badge }: { badge: FactorBadge }) {
@@ -191,7 +192,8 @@ function EnvSection({ game, envFactors }: { game: GameResult; envFactors: Factor
 // ─── Root ─────────────────────────────────────────────────────────────────────
 
 export default function MatchupDetail({ game }: { game: GameResult }) {
-  const breakdown = computeMatchupBreakdown(game)
+  const { settings } = useSettings()
+  const breakdown = computeMatchupBreakdown(game, settings)
   const awayTeam = getTeamDisplayName(game.awayTeam)
   const homeTeam = getTeamDisplayName(game.homeTeam)
 

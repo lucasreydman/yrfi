@@ -8,6 +8,7 @@ import {
 } from './poisson'
 import { getOutfieldFacingDegrees } from './weather-api'
 import type { GameResult, PitcherStats } from './types'
+import type { Settings } from '@/app/context/SettingsContext'
 
 export interface FactorBadge {
   label: string
@@ -122,7 +123,13 @@ function lineupFactors(
   return badges
 }
 
-export function computeMatchupBreakdown(game: GameResult): MatchupBreakdown {
+export function computeMatchupBreakdown(
+  game: GameResult,
+  settings?: Pick<Settings, 'tempUnit' | 'windUnit'>,
+): MatchupBreakdown {
+  const tempUnit = settings?.tempUnit ?? 'F'
+  const windUnit = settings?.windUnit ?? 'mph'
+
   const { homePitcher, awayPitcher, homeOBP, awayOBP, topOfOrderOBP, weather, parkFactor } = game
   const outfieldFacing = getOutfieldFacingDegrees(game.venueId)
 
@@ -141,21 +148,27 @@ export function computeMatchupBreakdown(game: GameResult): MatchupBreakdown {
     'neutral park'
 
   const tempM = Math.pow(tf, 0.50)
+  const tempDisplay = tempUnit === 'C'
+    ? `${Math.round((tempF - 32) * 5 / 9)}°C`
+    : `${tempF}°F`
   const tempDesc =
-    tf < 1 ? `${tempF}°F — cold suppresses scoring` :
-    tf > 1 ? `${tempF}°F — warm boosts scoring` :
-    `${tempF}°F — neutral`
+    tf < 1 ? `${tempDisplay} — cold suppresses scoring` :
+    tf > 1 ? `${tempDisplay} — warm boosts scoring` :
+    `${tempDisplay} — neutral`
 
   const windM = Math.pow(wf, 0.50)
+  const windDisplay = (spd: number) => windUnit === 'kmh'
+    ? `${Math.round(spd * 1.60934)} km/h`
+    : `${spd} mph`
   let windDesc = 'calm — no effect'
   if (!isControlled && windSpeedMph >= 10) {
     let delta = Math.abs(windFromDegrees - outfieldFacing) % 360
     if (delta > 180) delta = 360 - delta
-    if (delta <= 45) windDesc = `${windSpeedMph} mph blowing in`
-    else if (delta >= 135) windDesc = `${windSpeedMph} mph blowing out`
-    else windDesc = `${windSpeedMph} mph crosswind`
+    if (delta <= 45) windDesc = `${windDisplay(windSpeedMph)} blowing in`
+    else if (delta >= 135) windDesc = `${windDisplay(windSpeedMph)} blowing out`
+    else windDesc = `${windDisplay(windSpeedMph)} crosswind`
   } else if (!isControlled && windSpeedMph > 0) {
-    windDesc = `${windSpeedMph} mph — light`
+    windDesc = `${windDisplay(windSpeedMph)} — light`
   }
 
   const envFactors: FactorBadge[] = isControlled
